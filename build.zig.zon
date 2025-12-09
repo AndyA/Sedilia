@@ -1,0 +1,20 @@
+.{
+    .name = .sedilia,
+    .version = "0.0.0",
+    .fingerprint = 0xfd0e5141bd0ec1d1, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0-dev.1484+d0ba6642b",
+    .dependencies = .{
+        .rocksdb = .{
+            .url = "https://github.com/Syndica/rocksdb-zig/archive/c4e2a4461459aa02d037993e5f4dae7e24c290cb.tar.gz",
+            .hash = "rocksdb-9.7.4-z_CUThG5AADJl5KzxoqbR6kLKYb7Gmxi5IAcac4JjRRo",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        // For example...
+        //"LICENSE",
+        //"README.md",
+    },
+}
