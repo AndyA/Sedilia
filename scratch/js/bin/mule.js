@@ -25,7 +25,7 @@ const viewMap = function (doc) {
 console.log(`Processing ${data.length} rows 1000 times each`);
 const start = Date.now();
 for (let i = 0; i < 1000; i++) {
-  for (row of data) {
+  for (const row of data) {
     viewMap(row);
   }
 }
