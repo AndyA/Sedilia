@@ -12,6 +12,6 @@ pub fn main() !void {
         &err,
     );
     defer db.deinit();
-    _ = cf;
-    std.debug.print("{any}\n", .{rocksdb});
+    // _ = cf;
+    std.debug.print("{any}\n", .{cf});
 }
