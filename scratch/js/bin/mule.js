@@ -22,9 +22,12 @@ const viewMap = function (doc) {
   );
 };
 
-console.log(`Processing ${data.length} rows 1000 times each`);
+const TOTAL = 12339702;
+const scale = Math.ceil(TOTAL / data.length);
+
+console.log(`Processing ${data.length} rows ${scale} times each`);
 const start = Date.now();
-for (let i = 0; i < 1000; i++) {
+for (let i = 0; i < scale; i++) {
   for (const row of data) {
     viewMap(row);
   }
