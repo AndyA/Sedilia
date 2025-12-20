@@ -4,6 +4,7 @@ import json
 import math
 import time
 from datetime import datetime
+from typing import Literal
 
 with open("../../tmp/mcc.json", "r") as f:
     data = json.load(f)
@@ -15,10 +16,12 @@ def emit(key, value):
     rows.append({"key": key, "value": value})
 
 
-def view_map(doc):
+def view_map(doc: dict):
     if "mcc_cdc" not in doc:
         return
-    source = doc["contentType"]["source"] if "contentType" in doc else "tagging"
+    source: str | Literal["tagging"] = (
+        doc["contentType"]["source"] if "contentType" in doc else "tagging"
+    )
     emit(
         [
             datetime.fromtimestamp(doc["mcc_cdc"]["sequence"]).isoformat(),
