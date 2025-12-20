@@ -4,7 +4,6 @@ import json
 import math
 import time
 from datetime import datetime
-from typing import Literal
 
 with open("../../tmp/mcc.json", "r") as f:
     data = json.load(f)
@@ -17,21 +16,20 @@ def emit(key, value):
 
 
 def view_map(doc: dict):
-    if "mcc_cdc" not in doc:
-        return
-    source: str | Literal["tagging"] = (
-        doc["contentType"]["source"] if "contentType" in doc else "tagging"
-    )
-    emit(
-        [
-            datetime.fromtimestamp(doc["mcc_cdc"]["sequence"]).isoformat(),
-            doc["mcc_cdc"]["sequence"],
-            doc["mcc_cdc"]["update_type"],
-            doc["mcc_cdc"]["object_type"],
-            source,
-        ],
-        1,
-    )
+    if mcc := doc.get("mcc_cdc"):
+        source: str = (
+            doc["contentType"]["source"] if "contentType" in doc else "tagging"
+        )
+        emit(
+            [
+                datetime.fromtimestamp(mcc["sequence"]).isoformat(),
+                mcc["sequence"],
+                mcc["update_type"],
+                mcc["object_type"],
+                source,
+            ],
+            1,
+        )
 
 
 TOTAL = 12339702
