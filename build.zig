@@ -13,7 +13,10 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    const bindings = b.dependency("rocksdb", .{}).module("bindings");
+    const bindings = b.dependency("rocksdb", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("bindings");
     exe.root_module.addImport("rocksdb", bindings);
 
     b.installArtifact(exe);
