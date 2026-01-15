@@ -1,0 +1,11 @@
+2026-01-09T03:46:09+00:00 - 17dbe23 - fry
+[ IbexNumber/f64                           ]       encodedLength:            103189603 / s
+[ IbexNumber/f64                           ]               write:             48987882 / s
+[ IbexNumber/f64                           ]                read:             55040022 / s
+2026-01-12T22:08:35+00:00 - a156c0e - fry - 0.16.0-dev.2187+e2338edb4
+[ IbexNumber/f64                           ]        encodedLength:            116927267 / s
+[ IbexNumber/f64                           ]                write:             45696028 / s
+[ IbexNumber/f64                           ]                 read:             55821442 / s
+[ IbexInt/lengths                          ]        encodedLength:            938719137 / s
+[ IbexInt/lengths                          ]                write:            690429369 / s
+[ IbexInt/lengths                          ]                 read:            449629823 / s

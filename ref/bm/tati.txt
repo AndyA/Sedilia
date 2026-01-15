@@ -1,0 +1,11 @@
+2026-01-09T03:45:22+00:00 - 86f6cf8 - tati
+[ IbexNumber/f64                           ]       encodedLength:             93510475 / s
+[ IbexNumber/f64                           ]               write:             46984319 / s
+[ IbexNumber/f64                           ]                read:             57573964 / s
+2026-01-12T22:12:28+00:00 - 12edb91 - tati - 0.16.0-dev.2187+e2338edb4
+[ IbexNumber/f64                           ]        encodedLength:            109089056 / s
+[ IbexNumber/f64                           ]                write:             45626311 / s
+[ IbexNumber/f64                           ]                 read:             58486872 / s
+[ IbexInt/lengths                          ]        encodedLength:           1167470267 / s
+[ IbexInt/lengths                          ]                write:            732302452 / s
+[ IbexInt/lengths                          ]                 read:            476862514 / s

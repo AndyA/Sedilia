@@ -1,0 +1,4 @@
+2026-01-09T11:27:45+00:00 - e3a5379 - dino
+[ IbexNumber/f64                           ]       encodedLength:             49034289 / s
+[ IbexNumber/f64                           ]               write:             21918676 / s
+[ IbexNumber/f64                           ]                read:             26000986 / s

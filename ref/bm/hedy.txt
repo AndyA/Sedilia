@@ -1,0 +1,4 @@
+2026-01-09T03:49:05+00:00 - e5c69bc - hedy
+[ IbexNumber/f64                           ]       encodedLength:            141410755 / s
+[ IbexNumber/f64                           ]               write:             62049282 / s
+[ IbexNumber/f64                           ]                read:             82588883 / s

@@ -1,8 +1,8 @@
 .{
-    .name = .sedilia,
-    .version = "0.0.0",
-    .fingerprint = 0xfd0e5141bd0ec1d1, // Changing this has security and trust implications.
-    .minimum_zig_version = "0.16.0-dev.1484+d0ba6642b",
+    .name = .scratch,
+    .version = "0.0.1",
+    .fingerprint = 0x90455a7723a9eff3, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0-dev.2205+d86e8b779",
     .dependencies = .{
         .rocksdb = .{
             .url = "git+https://github.com/AndyA/rocksdb-zig#8ba9d388de1cacabe195c6195b664c5d23ceff67",
@@ -13,8 +13,5 @@
         "build.zig",
         "build.zig.zon",
         "src",
-        // For example...
-        //"LICENSE",
-        //"README.md",
     },
 }

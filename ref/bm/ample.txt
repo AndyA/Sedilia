@@ -1,0 +1,26 @@
+2026-01-09T03:44:41+00:00 - ed63839 - ample
+[ IbexNumber/f64                           ]       encodedLength:            445619245 / s
+[ IbexNumber/f64                           ]               write:            114442708 / s
+[ IbexNumber/f64                           ]                read:            152618706 / s
+2026-01-10T18:23:49+00:00 - 3caf154 - ample - 0.16.0-dev.2135+7c0b42ba0
+[ IbexNumber/f64                           ]       encodedLength:            446142944 / s
+[ IbexNumber/f64                           ]               write:            114373685 / s
+[ IbexNumber/f64                           ]                read:            154700370 / s
+2026-01-12T14:53:38+00:00 - 8b2ae78 - ample - 0.16.0-dev.2145+ec25b1384
+[ IbexNumber/f64                           ]       encodedLength:            458706548 / s
+[ IbexNumber/f64                           ]               write:            116725128 / s
+[ IbexNumber/f64                           ]                read:            168605378 / s
+2026-01-12T18:13:37+00:00 - 054a5ec - ample - 0.16.0-dev.2187+e2338edb4
+[ IbexNumber/f64                           ]        encodedLength:            442862507 / s
+[ IbexNumber/f64                           ]                write:            110032756 / s
+[ IbexNumber/f64                           ]                 read:            141630073 / s
+[ IbexInt/lengths                          ]        encodedLength:           2693773963 / s
+[ IbexInt/lengths                          ]                write:           2220144332 / s
+[ IbexInt/lengths                          ]                 read:           1233782698 / s
+2026-01-12T21:20:56+00:00 - 3c6f1db - ample - 0.16.0-dev.2187+e2338edb4
+[ IbexNumber/f64                           ]        encodedLength:            456892376 / s
+[ IbexNumber/f64                           ]                write:            110450324 / s
+[ IbexNumber/f64                           ]                 read:            144717767 / s
+[ IbexInt/lengths                          ]        encodedLength:           2714771942 / s
+[ IbexInt/lengths                          ]                write:           2234557102 / s
+[ IbexInt/lengths                          ]                 read:           1226025355 / s
