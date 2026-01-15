@@ -33,7 +33,7 @@ const Benchmarks = struct {
             .{ actual_docs, spec.doc_size, spec.batch_size },
         );
 
-        try std.Io.Dir.deleteTree(std.Io.Dir.cwd(), self.io, "tmp/bulk.db");
+        std.Io.Dir.deleteTree(std.Io.Dir.cwd(), self.io, "tmp/bulk.db") catch {};
 
         var err: ?rocksdb.Data = null;
         const db, const cf = rocksdb.DB.open(
