@@ -5,7 +5,7 @@ fn benchmark(
     comptime name: []const u8,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-) void {
+) *std.Build.Step.Compile {
     const bm_exe = b.addExecutable(.{
         .name = name,
         .root_module = b.createModule(.{
@@ -15,6 +15,7 @@ fn benchmark(
         }),
     });
     b.installArtifact(bm_exe);
+    return bm_exe;
 }
 
 pub fn build(b: *std.Build) void {
@@ -57,5 +58,9 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run tests");
 
     test_step.dependOn(&run_exe_tests.step);
-    benchmark(b, "bm-codec", target, optimize);
+
+    // Benchmarks
+    _ = benchmark(b, "bm-codec", target, optimize);
+    const bm_rocks_exe = benchmark(b, "bm-rocks", target, optimize);
+    bm_rocks_exe.root_module.addImport("rocksdb", rdb_bindings);
 }
