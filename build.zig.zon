@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.16.0-dev.2205+d86e8b779",
     .dependencies = .{
         .rocksdb = .{
-            .url = "git+https://github.com/AndyA/rocksdb-zig#081ce7538ec48e20d64d02a52447c165dfb477e0",
-            .hash = "rocksdb-9.7.4-z_CUTt_BAADbZKBtdAZ_cFNp3pvsUS6rw-n0zI_tJfAO",
+            .url = "git+https://github.com/AndyA/rocksdb-zig#2611750941b6ed729d2dcafe837ca54f25a7e056",
+            .hash = "rocksdb-9.7.4-z_CUTuLBAACRMaDg0CHwDxgXd9FsC3Mqn8oeEFqK9ndx",
         },
     },
     .paths = .{
