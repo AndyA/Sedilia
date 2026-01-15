@@ -44,6 +44,7 @@ const Benchmarks = struct {
             &err,
         ) catch |e| {
             std.debug.print("{s}: {s}\n", .{ @errorName(e), err.?.data });
+            if (err) |x| x.deinit();
             return e;
         };
         defer db.deinit();
@@ -68,6 +69,14 @@ const Benchmarks = struct {
         }
 
         bm.showRate(name, label, actual_docs, &timer);
+
+        // var iter = db.iterator(cf[0].handle, .forward, null);
+        // while (try iter.next(&err)) |i| {
+        //     for (i[0].data) |kb| {
+        //         std.debug.print("{x:0>2} ", .{kb});
+        //     }
+        //     std.debug.print("\n", .{});
+        // }
     }
 
     pub fn @"Rocks/Batch/Write"(self: *Self, comptime name: []const u8) !void {
