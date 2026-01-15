@@ -24,3 +24,34 @@
 [ IbexInt/lengths                          ]        encodedLength:           2714771942 / s
 [ IbexInt/lengths                          ]                write:           2234557102 / s
 [ IbexInt/lengths                          ]                 read:           1226025355 / s
+2026-01-15T15:59:24+00:00 - 24c36fb - ample - 0.16.0-dev.2205+d86e8b779
+[ IbexNumber/f64                           ]        encodedLength:            455881325 / s
+[ IbexNumber/f64                           ]                write:            108405921 / s
+[ IbexNumber/f64                           ]                 read:            149612450 / s
+[ IbexInt/lengths                          ]        encodedLength:           2647882529 / s
+[ IbexInt/lengths                          ]                write:           2220083788 / s
+[ IbexInt/lengths                          ]                 read:           1212779421 / s
+[ Rocks/Batch/Write                        ]   10000/   10/   100:              1561047 / s
+[ Rocks/Batch/Write                        ]   10000/   10/ 10000:               234033 / s
+[ Rocks/Batch/Write                        ]   10000/   10/ 20000:               140874 / s
+[ Rocks/Batch/Write                        ]   10000/  100/   100:              1717230 / s
+[ Rocks/Batch/Write                        ]   10000/  100/ 10000:               235024 / s
+[ Rocks/Batch/Write                        ]   10000/  100/ 20000:               141156 / s
+[ Rocks/Batch/Write                        ]   10000/ 1000/   100:              3332361 / s
+[ Rocks/Batch/Write                        ]   10000/ 1000/ 10000:               265626 / s
+[ Rocks/Batch/Write                        ]   10000/ 1000/ 20000:               104398 / s
+[ Rocks/Batch/Write                        ]   10000/10000/   100:              3535183 / s
+[ Rocks/Batch/Write                        ]   10000/10000/ 10000:               205817 / s
+[ Rocks/Batch/Write                        ]   10000/10000/ 20000:               106966 / s
+[ Rocks/Batch/Write                        ] 1000000/   10/   100:              1215875 / s
+[ Rocks/Batch/Write                        ] 1000000/   10/ 10000:                52424 / s
+[ Rocks/Batch/Write                        ] 1000000/   10/ 20000:                 8016 / s
+[ Rocks/Batch/Write                        ] 1000000/  100/   100:              1491539 / s
+[ Rocks/Batch/Write                        ] 1000000/  100/ 10000:                38625 / s
+[ Rocks/Batch/Write                        ] 1000000/  100/ 20000:                 7039 / s
+[ Rocks/Batch/Write                        ] 1000000/ 1000/   100:              1459493 / s
+[ Rocks/Batch/Write                        ] 1000000/ 1000/ 10000:                23028 / s
+[ Rocks/Batch/Write                        ] 1000000/ 1000/ 20000:                 6089 / s
+[ Rocks/Batch/Write                        ] 1000000/10000/   100:              1597694 / s
+[ Rocks/Batch/Write                        ] 1000000/10000/ 10000:                28980 / s
+[ Rocks/Batch/Write                        ] 1000000/10000/ 20000:                 9062 / s
