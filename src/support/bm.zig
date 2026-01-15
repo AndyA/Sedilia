@@ -33,7 +33,7 @@ pub fn showRate(name: []const u8, metric: []const u8, total: usize, timer: *Time
     // std.debug.print("elapsed={d}\n", .{elapsed});
     const seconds = @as(f64, @floatFromInt(elapsed)) / 1_000_000_000;
     const rate = @as(f64, @floatFromInt(total)) / seconds;
-    std.debug.print("[ {s:<40} ] {s:>20}: {d:>20.0} / s\n", .{ name, metric, rate });
+    std.debug.print("[ {s:<40} ] {s:>30}: {d:>20.0} / s\n", .{ name, metric, rate });
 }
 
 pub const BMOptions = struct {

@@ -29,7 +29,7 @@ const Benchmarks = struct {
         var label_buf: [200]u8 = undefined;
         const label = try std.fmt.bufPrint(
             &label_buf,
-            "{d:>7}/{d:>6}/{d:>5}",
+            "{d:>10}/{d:>8}/{d:>4}",
             .{ actual_docs, spec.doc_size, spec.batch_size },
         );
 
@@ -81,7 +81,7 @@ const Benchmarks = struct {
     pub fn @"Rocks/Batch/Write"(self: *Self, comptime name: []const u8) !void {
         const total_docs = [_]usize{ 10_000, 1_000_000 };
         const doc_size = [_]usize{ 100, 10_000, 20_000 };
-        const batch_size = [_]usize{ 10, 100, 1_000, 10_000 };
+        const batch_size = [_]usize{1_000};
 
         inline for (total_docs) |td| {
             inline for (doc_size) |ds| {
@@ -95,6 +95,15 @@ const Benchmarks = struct {
                 }
             }
         }
+    }
+
+    pub fn @"Rocks/Batch/IndexLike"(self: *Self, comptime name: []const u8) !void {
+        const spec = BatchSpec{
+            .total_docs = 100_000_000,
+            .batch_size = 1000,
+            .doc_size = 100,
+        };
+        try self.batchWrite(name, spec);
     }
 };
 
