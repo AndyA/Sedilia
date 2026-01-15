@@ -71,9 +71,9 @@ const Benchmarks = struct {
     }
 
     pub fn @"Rocks/Batch/Write"(self: *Self, comptime name: []const u8) !void {
-        const total_docs = [_]usize{ 10_000, 1_000_000, 5_000_000 };
+        const total_docs = [_]usize{ 10_000, 1_000_000 };
         const batch_size = [_]usize{ 10, 100, 1_000, 10_000 };
-        const doc_size = [_]usize{ 100, 10_000, 100_000 };
+        const doc_size = [_]usize{ 100, 10_000, 20_000 };
 
         inline for (total_docs) |td| {
             inline for (batch_size) |bs| {
