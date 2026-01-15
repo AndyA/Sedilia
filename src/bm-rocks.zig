@@ -29,8 +29,8 @@ const Benchmarks = struct {
         var label_buf: [200]u8 = undefined;
         const label = try std.fmt.bufPrint(
             &label_buf,
-            "{d:>7}/{d:>5}/{d:>6}",
-            .{ actual_docs, spec.batch_size, spec.doc_size },
+            "{d:>7}/{d:>6}/{d:>5}",
+            .{ actual_docs, spec.doc_size, spec.batch_size },
         );
 
         try std.Io.Dir.deleteTree(std.Io.Dir.cwd(), self.io, "tmp/bulk.db");
@@ -44,7 +44,6 @@ const Benchmarks = struct {
             &err,
         ) catch |e| {
             std.debug.print("{s}: {s}\n", .{ @errorName(e), err.?.data });
-            if (err) |x| x.deinit();
             return e;
         };
         defer db.deinit();
@@ -81,12 +80,12 @@ const Benchmarks = struct {
 
     pub fn @"Rocks/Batch/Write"(self: *Self, comptime name: []const u8) !void {
         const total_docs = [_]usize{ 10_000, 1_000_000 };
-        const batch_size = [_]usize{ 10, 100, 1_000, 10_000 };
         const doc_size = [_]usize{ 100, 10_000, 20_000 };
+        const batch_size = [_]usize{ 10, 100, 1_000, 10_000 };
 
         inline for (total_docs) |td| {
-            inline for (batch_size) |bs| {
-                inline for (doc_size) |ds| {
+            inline for (doc_size) |ds| {
+                inline for (batch_size) |bs| {
                     const spec = BatchSpec{
                         .total_docs = td,
                         .batch_size = bs,
