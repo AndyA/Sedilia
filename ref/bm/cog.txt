@@ -29,3 +29,17 @@
 [ Rocks/Batch/Write                        ] 1000000/10000/   100:               481799 / s
 [ Rocks/Batch/Write                        ] 1000000/10000/ 10000:                 9199 / s
 [ Rocks/Batch/Write                        ] 1000000/10000/ 20000:                 4581 / s
+2026-01-15T20:49:41+00:00 - 37943b7 - cog - 0.16.0-dev.2205+d86e8b779
+[ IbexNumber/f64                           ]                  encodedLength:            118347164 / s
+[ IbexNumber/f64                           ]                          write:             46468589 / s
+[ IbexNumber/f64                           ]                           read:             55179168 / s
+[ IbexInt/lengths                          ]                  encodedLength:            967090089 / s
+[ IbexInt/lengths                          ]                          write:            685485548 / s
+[ IbexInt/lengths                          ]                           read:            450066732 / s
+[ Rocks/Batch/Write                        ]            10000/     100/1000:               910942 / s
+[ Rocks/Batch/Write                        ]            10000/   10000/1000:                37937 / s
+[ Rocks/Batch/Write                        ]            10000/   20000/1000:                17623 / s
+[ Rocks/Batch/Write                        ]          1000000/     100/1000:               494166 / s
+[ Rocks/Batch/Write                        ]          1000000/   10000/1000:                 7139 / s
+[ Rocks/Batch/Write                        ]          1000000/   20000/1000:                 2367 / s
+[ Rocks/Batch/IndexLike                    ]        100000000/     100/1000:               240680 / s
