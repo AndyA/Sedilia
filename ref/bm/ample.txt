@@ -69,3 +69,17 @@
 [ Rocks/Batch/Write                        ]          1000000/   10000/1000:                50206 / s
 [ Rocks/Batch/Write                        ]          1000000/   20000/1000:                 4812 / s
 [ Rocks/Batch/IndexLike                    ]        100000000/     100/1000:              1229491 / s
+2026-01-15T20:32:46+00:00 - e8b568c - ample - 0.16.0-dev.2205+d86e8b779
+[ IbexNumber/f64                           ]                  encodedLength:            453126687 / s
+[ IbexNumber/f64                           ]                          write:            107619105 / s
+[ IbexNumber/f64                           ]                           read:            148759568 / s
+[ IbexInt/lengths                          ]                  encodedLength:           2614994491 / s
+[ IbexInt/lengths                          ]                          write:           2176526650 / s
+[ IbexInt/lengths                          ]                           read:           1199684999 / s
+[ Rocks/Batch/Write                        ]            10000/     100/1000:              3169112 / s
+[ Rocks/Batch/Write                        ]            10000/   10000/1000:               234434 / s
+[ Rocks/Batch/Write                        ]            10000/   20000/1000:               121183 / s
+[ Rocks/Batch/Write                        ]          1000000/     100/1000:              1356262 / s
+[ Rocks/Batch/Write                        ]          1000000/   10000/1000:                53667 / s
+[ Rocks/Batch/Write                        ]          1000000/   20000/1000:                 7716 / s
+[ Rocks/Batch/IndexLike                    ]        100000000/     100/1000:              1250790 / s
