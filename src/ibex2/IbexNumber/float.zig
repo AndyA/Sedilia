@@ -301,18 +301,18 @@ fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: TMost(TWrit
 
 const FloatTypes = [_]type{ f16, f32, f64, f80, f128 };
 
-// test floatCodec {
-//     inline for (FloatTypes) |TWrite| {
-//         inline for (FloatTypes) |TRead| {
-//             // std.debug.print("=== {any} -> {any} ===\n", .{ TWrite, TRead });
-//             const tvw = floatTestVector(TWrite);
-//             for (tvw.slice()) |value| {
-//                 try testRoundTrip(TWrite, TRead, value);
-//             }
-//             const tvr = floatTestVector(TRead);
-//             for (tvr.slice()) |value| {
-//                 try testRoundTrip(TWrite, TRead, value);
-//             }
-//         }
-//     }
-// }
+test floatCodec {
+    inline for (FloatTypes) |TWrite| {
+        inline for (FloatTypes) |TRead| {
+            // std.debug.print("=== {any} -> {any} ===\n", .{ TWrite, TRead });
+            const tvw = floatTestVector(TWrite);
+            for (tvw.slice()) |value| {
+                try testRoundTrip(TWrite, TRead, value);
+            }
+            const tvr = floatTestVector(TRead);
+            for (tvr.slice()) |value| {
+                try testRoundTrip(TWrite, TRead, value);
+            }
+        }
+    }
+}

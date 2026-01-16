@@ -10,10 +10,11 @@ Oryx: fast encoding for object
 | JSONValue ⇢ |           ✔ |      ✔ |           🟰 |           ✘ |
 | IbexValue ⇢ |           ✔ |      ✔ |           ✘ |           🟰 |
 
-## Thinks
+## TODO
 
-- Ibex/Oryx native support for JS, Python (obv zig)
 - Remove per-length offset from `IbexInt`.
+- Benchmark Io.Writer based encoding
+- Ibex/Oryx native support for JS, Python (obv zig)
 
 ## Ibex
 

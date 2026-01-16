@@ -48,23 +48,22 @@ pub fn TestVec(comptime T: type, comptime size: usize) type {
 }
 
 pub fn checkFloat(buf: []const u8) void {
-    _ = buf;
-    // var r = ByteReader{ .buf = buf };
-    // defer assert(r.eof());
-    // const nb = r.next() catch unreachable;
-    // const tag: IbexTag = @enumFromInt(nb);
-    // switch (tag) {
-    //     .NumPos => {},
-    //     .NumNeg => r.negate(),
-    //     .NumPosZero, .NumPosInf, .NumPosNaN => return,
-    //     .NumNegZero, .NumNegInf, .NumNegNaN => return,
-    //     else => unreachable,
-    // }
-    // _ = IbexInt.read(&r) catch unreachable;
-    // var first = true;
-    // while (true) : (first = false) {
-    //     const mb = r.next() catch unreachable;
-    //     assert(first or mb != 0);
-    //     if (mb & 0x01 == 0) break;
-    // }
+    var r = ByteReader{ .buf = buf };
+    defer assert(r.eof());
+    const nb = r.next() catch unreachable;
+    const tag: IbexTag = @enumFromInt(nb);
+    switch (tag) {
+        .NumPos => {},
+        .NumNeg => r.negate(),
+        .NumPosZero, .NumPosInf, .NumPosNaN => return,
+        .NumNegZero, .NumNegInf, .NumNegNaN => return,
+        else => unreachable,
+    }
+    _ = IbexInt.read(&r) catch unreachable;
+    var first = true;
+    while (true) : (first = false) {
+        const mb = r.next() catch unreachable;
+        assert(first or mb != 0);
+        if (mb & 0x01 == 0) break;
+    }
 }
