@@ -17,7 +17,7 @@ pub fn mantissaLength(comptime T: type, mant: T) usize {
     return @max(1, sizeInBytes(T, mant));
 }
 
-pub fn writeMantissa(comptime T: type, w: *ByteWriter, mantissa: T) IbexError!void {
+pub fn writeMantissa(comptime T: type, w: *ByteWriter, mantissa: T) !void {
     const info = @typeInfo(T).int;
     assert(info.signedness == .unsigned);
     const len = sizeInBytes(T, mantissa);
@@ -57,17 +57,18 @@ const general_cases = &[_]TestCase{
 };
 
 test writeMantissa {
+    const gpa = std.testing.allocator;
     inline for (general_cases) |tc| {
-        var buf: [256]u8 = undefined;
-        var w = ByteWriter{ .buf = &buf };
+        var w = ByteWriter{ .gpa = gpa };
+        defer w.deinit();
         try writeMantissa(tc.T, &w, tc.mant);
         // std.debug.print("T={any}, m={x} encoded={any}\n", .{ tc.T, tc.mant, w.slice() });
-        try std.testing.expectEqual(w.pos, mantissaLength(tc.T, tc.mant));
+        try std.testing.expectEqual(w.buf.items.len, mantissaLength(tc.T, tc.mant));
         try std.testing.expectEqualDeep(tc.bytes, w.slice());
     }
 }
 
-pub fn readMantissa(comptime T: type, r: *ByteReader) IbexError!T {
+pub fn readMantissa(comptime T: type, r: *ByteReader) !T {
     const info = @typeInfo(T).int;
     assert(info.signedness == .unsigned);
 

@@ -1,6 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
+const Allocator = std.mem.Allocator;
 
 const ibex = @import("../ibex.zig");
 const IbexTag = ibex.IbexTag;
@@ -73,6 +74,7 @@ fn isOverflow(comptime T: type, value: anytype) bool {
         (value < -math.floatMax(T) or
             value > math.floatMax(T));
 }
+
 pub fn floatCodec(comptime T: type) type {
     if (T == f80) {
         const codec = floatCodec(f128);
@@ -82,11 +84,11 @@ pub fn floatCodec(comptime T: type) type {
                 return codec.encodedLength(value);
             }
 
-            pub fn write(w: *ByteWriter, value: T) IbexError!void {
+            pub fn write(w: *ByteWriter, value: T) !void {
                 try codec.write(w, value);
             }
 
-            pub fn read(r: *ByteReader) IbexError!T {
+            pub fn read(r: *ByteReader) !T {
                 const res = try codec.read(r);
                 if (isOverflow(f80, res))
                     return IbexError.Overflow;
@@ -129,13 +131,13 @@ pub fn floatCodec(comptime T: type) type {
                 mantissa.mantissaLength(VT.TMant, mant);
         }
 
-        fn writeFloat(w: *ByteWriter, value: T) IbexError!void {
+        fn writeFloat(w: *ByteWriter, value: T) !void {
             const exp, const mant = massageFloat(value);
             try IbexInt.write(w, exp - VT.exp_bias);
             try mantissa.writeMantissa(VT.TMant, w, mant);
         }
 
-        pub fn write(w: *ByteWriter, value: T) IbexError!void {
+        pub fn write(w: *ByteWriter, value: T) !void {
             if (math.isNegativeInf(value))
                 return w.put(@intFromEnum(IbexTag.NumNegInf))
             else if (math.isPositiveInf(value))
@@ -159,7 +161,7 @@ pub fn floatCodec(comptime T: type) type {
             }
         }
 
-        fn readNumPos(r: *ByteReader) IbexError!T {
+        fn readNumPos(r: *ByteReader) !T {
             var exp = try IbexInt.read(r) + VT.exp_bias;
             // std.debug.print("exp={d}, max={d}\n", .{ exp, math.maxInt(VT.TExp) });
             if (exp >= math.maxInt(VT.TExp))
@@ -183,13 +185,13 @@ pub fn floatCodec(comptime T: type) type {
             return v.get();
         }
 
-        fn readNumNeg(r: *ByteReader) IbexError!T {
+        fn readNumNeg(r: *ByteReader) !T {
             r.negate();
             defer r.negate();
             return -try readNumPos(r);
         }
 
-        pub fn read(r: *ByteReader) IbexError!T {
+        pub fn read(r: *ByteReader) !T {
             const nb = try r.next();
             const tag: IbexTag = @enumFromInt(nb);
             return switch (tag) {
@@ -253,17 +255,22 @@ fn TLeast(comptime TA: type, comptime TB: type) type {
     return if (@typeInfo(TA).float.bits < @typeInfo(TB).float.bits) TA else TB;
 }
 
-fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: TMost(TWrite, TRead)) !void {
+fn testRoundTrip(
+    gpa: Allocator,
+    comptime TWrite: type,
+    comptime TRead: type,
+    value: TMost(TWrite, TRead),
+) !void {
     if (isOverflow(TWrite, value)) {
         // std.debug.print("skipping {d} out of range for {any}\n", .{ value, TWrite });
         return;
     }
     const enc = floatCodec(TWrite);
-    var buf: [256]u8 = undefined;
-    var w = ByteWriter{ .buf = &buf };
+    var w = ByteWriter{ .gpa = gpa };
+    defer w.deinit();
     try enc.write(&w, @floatCast(value));
     // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-    try std.testing.expectEqual(w.pos, enc.encodedLength(@floatCast(value)));
+    try std.testing.expectEqual(w.buf.items.len, enc.encodedLength(@floatCast(value)));
 
     const dec = floatCodec(TRead);
     var r = ByteReader{ .buf = w.slice() };
@@ -301,18 +308,19 @@ fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: TMost(TWrit
 
 const FloatTypes = [_]type{ f16, f32, f64, f80, f128 };
 
-// test floatCodec {
-//     inline for (FloatTypes) |TWrite| {
-//         inline for (FloatTypes) |TRead| {
-//             // std.debug.print("=== {any} -> {any} ===\n", .{ TWrite, TRead });
-//             const tvw = floatTestVector(TWrite);
-//             for (tvw.slice()) |value| {
-//                 try testRoundTrip(TWrite, TRead, value);
-//             }
-//             const tvr = floatTestVector(TRead);
-//             for (tvr.slice()) |value| {
-//                 try testRoundTrip(TWrite, TRead, value);
-//             }
-//         }
-//     }
-// }
+test floatCodec {
+    const gpa = std.testing.allocator;
+    inline for (FloatTypes) |TWrite| {
+        inline for (FloatTypes) |TRead| {
+            // std.debug.print("=== {any} -> {any} ===\n", .{ TWrite, TRead });
+            const tvw = floatTestVector(TWrite);
+            for (tvw.slice()) |value| {
+                try testRoundTrip(gpa, TWrite, TRead, value);
+            }
+            const tvr = floatTestVector(TRead);
+            for (tvr.slice()) |value| {
+                try testRoundTrip(gpa, TWrite, TRead, value);
+            }
+        }
+    }
+}

@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const Allocator = std.mem.Allocator;
 const ibex = @import("./ibex.zig");
 
 const IbexError = ibex.IbexError;
@@ -34,20 +35,25 @@ pub const ByteReader = struct {
 
 pub const ByteWriter = struct {
     const Self = @This();
-    buf: []u8,
-    flip: u8 = 0x00,
-    pos: usize = 0,
 
-    pub fn put(self: *Self, b: u8) IbexError!void {
-        assert(self.pos <= self.buf.len);
-        if (self.pos == self.buf.len)
-            return IbexError.BufferFull;
-        defer self.pos += 1;
-        self.buf[self.pos] = b ^ self.flip;
+    gpa: Allocator,
+    buf: std.ArrayList(u8) = .empty,
+    flip: u8 = 0x00,
+
+    pub fn restart(self: *Self) void {
+        self.buf.items.len = 0;
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.buf.deinit(self.gpa);
+    }
+
+    pub fn put(self: *Self, b: u8) !void {
+        try self.buf.append(self.gpa, b ^ self.flip);
     }
 
     pub fn slice(self: *const Self) []const u8 {
-        return self.buf[0..self.pos];
+        return self.buf.items;
     }
 
     pub fn negate(self: *Self) void {

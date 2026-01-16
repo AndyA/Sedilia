@@ -38,7 +38,7 @@ fn repLength(tag: u8) usize {
         return 1;
 }
 
-fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) IbexError!i64 {
+fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) !i64 {
     assert(byte_count <= MAX_VALUE_BYTES);
     var acc: i64 = 0;
     for (0..byte_count) |_| {
@@ -49,7 +49,7 @@ fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) IbexError!i64
     return acc;
 }
 
-fn writeBytes(w: *ByteWriter, byte_count: usize, value: i64) IbexError!void {
+fn writeBytes(w: *ByteWriter, byte_count: usize, value: i64) !void {
     assert(byte_count <= MAX_VALUE_BYTES);
     for (0..byte_count) |i| {
         const pos: u6 = @intCast(byte_count - 1 - i);
@@ -73,7 +73,7 @@ test encodedLength {
     }
 }
 
-pub fn read(r: *ByteReader) IbexError!i64 {
+pub fn read(r: *ByteReader) !i64 {
     const nb = try r.next();
     const byte_count = repLength(nb);
     if (nb >= LINEAR_HI) {
@@ -93,7 +93,7 @@ test read {
     }
 }
 
-pub fn write(w: *ByteWriter, value: i64) IbexError!void {
+pub fn write(w: *ByteWriter, value: i64) !void {
     const byte_count = encodedLength(value) - 1;
     if (byte_count == 0) {
         try w.put(@intCast(value + BIAS));
@@ -107,22 +107,25 @@ pub fn write(w: *ByteWriter, value: i64) IbexError!void {
 }
 
 test write {
+    const gpa = std.testing.allocator;
     for (test_cases) |tc| {
-        var buf: [9]u8 = undefined;
-        var w = ByteWriter{ .buf = &buf, .flip = tc.flip };
+        var w = ByteWriter{ .gpa = gpa, .flip = tc.flip };
+        defer w.deinit();
         try IbexInt.write(&w, tc.want);
         try std.testing.expectEqualDeep(tc.buf, w.slice());
-        try std.testing.expectEqual(tc.buf.len, w.pos);
     }
 }
 
 test "round trip" {
-    var buf: [9]u8 = undefined;
+    const gpa = std.testing.allocator;
+
+    var w = ByteWriter{ .gpa = gpa };
+    defer w.deinit();
+
     for (0..140000) |offset| {
         const value = @as(i64, @intCast(offset)) - 70000;
-        var w = ByteWriter{ .buf = &buf };
+        w.restart();
         try IbexInt.write(&w, value);
-        try std.testing.expectEqual(w.pos, IbexInt.encodedLength(value));
         var r = ByteReader{ .buf = w.slice() };
         const got = IbexInt.read(&r);
         try std.testing.expectEqual(value, got);

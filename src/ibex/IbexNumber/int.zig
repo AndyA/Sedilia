@@ -34,7 +34,7 @@ pub fn intCodec(comptime T: type) type {
             return 1 + IbexInt.encodedLength(msb) + @max(1, byte_count);
         }
 
-        fn writeInt(w: *ByteWriter, value: T) IbexError!void {
+        fn writeInt(w: *ByteWriter, value: T) !void {
             const msb = info.bits - @clz(value) - 1; // drop MSB
             try IbexInt.write(w, msb); // exp
 
@@ -45,7 +45,7 @@ pub fn intCodec(comptime T: type) type {
             try mantissa.writeMantissa(UT, w, mant);
         }
 
-        pub fn write(w: *ByteWriter, value: T) IbexError!void {
+        pub fn write(w: *ByteWriter, value: T) !void {
             if (value == 0) {
                 try w.put(@intFromEnum(IbexTag.NumPosZero));
             } else if (value < 0) {
@@ -65,7 +65,7 @@ pub fn intCodec(comptime T: type) type {
             }
         }
 
-        fn readIntBits(r: *ByteReader, exp: i64) IbexError!T {
+        fn readIntBits(r: *ByteReader, exp: i64) !T {
             if (exp >= max_exp)
                 return IbexError.Overflow;
             const mant = try mantissa.readMantissa(UT, r);
@@ -76,12 +76,12 @@ pub fn intCodec(comptime T: type) type {
             return @intCast(int | (@as(UT, 1) << @intCast(exp)));
         }
 
-        fn readPosInt(r: *ByteReader) IbexError!T {
+        fn readPosInt(r: *ByteReader) !T {
             const exp = try IbexInt.read(r);
             return readIntBits(r, exp);
         }
 
-        fn readNegInt(r: *ByteReader) IbexError!T {
+        fn readNegInt(r: *ByteReader) !T {
             if (info.signedness == .unsigned)
                 return IbexError.Overflow;
             r.negate();
@@ -97,7 +97,7 @@ pub fn intCodec(comptime T: type) type {
             return -try readIntBits(r, exp);
         }
 
-        pub fn read(r: *ByteReader) IbexError!T {
+        pub fn read(r: *ByteReader) !T {
             const nb = try r.next();
             const tag: IbexTag = @enumFromInt(nb);
             return switch (tag) {
@@ -140,32 +140,33 @@ fn intTestVector(comptime T: type) TV(T) {
     return tv;
 }
 
-// test intCodec {
-//     // const bit_lengths = [_]usize{ 8, 16 };
-//     const bit_lengths = //
-//         [_]usize{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } ++ //
-//         [_]usize{ 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129, 1024 };
-//     const signs = [_]std.builtin.Signedness{
-//         .unsigned,
-//         .signed,
-//     };
+test intCodec {
+    const gpa = std.testing.allocator;
+    // const bit_lengths = [_]usize{ 8, 16 };
+    const bit_lengths = //
+        [_]usize{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } ++ //
+        [_]usize{ 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129, 1024 };
+    const signs = [_]std.builtin.Signedness{
+        .unsigned,
+        .signed,
+    };
 
-//     inline for (bit_lengths) |bits| {
-//         inline for (signs) |signedness| {
-//             const T = @Int(signedness, bits);
-//             // std.debug.print("=== {any} ===\n", .{T});
-//             const IF = intCodec(T);
-//             const tv = intTestVector(T);
-//             for (tv.slice()) |value| {
-//                 var buf: [256]u8 = undefined;
-//                 var w = ByteWriter{ .buf = &buf };
-//                 try IF.write(&w, value);
-//                 // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-//                 try std.testing.expectEqual(w.pos, IF.encodedLength(value));
-//                 tt.checkFloat(w.slice());
-//                 var r = ByteReader{ .buf = w.slice() };
-//                 try std.testing.expectEqual(value, try IF.read(&r));
-//             }
-//         }
-//     }
-// }
+    inline for (bit_lengths) |bits| {
+        inline for (signs) |signedness| {
+            const T = @Int(signedness, bits);
+            // std.debug.print("=== {any} ===\n", .{T});
+            const IF = intCodec(T);
+            const tv = intTestVector(T);
+            for (tv.slice()) |value| {
+                var w = ByteWriter{ .gpa = gpa };
+                defer w.deinit();
+                try IF.write(&w, value);
+                // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
+                try std.testing.expectEqual(w.buf.items.len, IF.encodedLength(value));
+                tt.checkFloat(w.slice());
+                var r = ByteReader{ .buf = w.slice() };
+                try std.testing.expectEqual(value, try IF.read(&r));
+            }
+        }
+    }
+}
