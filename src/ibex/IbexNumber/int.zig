@@ -140,32 +140,32 @@ fn intTestVector(comptime T: type) TV(T) {
     return tv;
 }
 
-// test intCodec {
-//     // const bit_lengths = [_]usize{ 8, 16 };
-//     const bit_lengths = //
-//         [_]usize{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } ++ //
-//         [_]usize{ 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129, 1024 };
-//     const signs = [_]std.builtin.Signedness{
-//         .unsigned,
-//         .signed,
-//     };
+test intCodec {
+    // const bit_lengths = [_]usize{ 8, 16 };
+    const bit_lengths = //
+        [_]usize{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } ++ //
+        [_]usize{ 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129, 1024 };
+    const signs = [_]std.builtin.Signedness{
+        .unsigned,
+        .signed,
+    };
 
-//     inline for (bit_lengths) |bits| {
-//         inline for (signs) |signedness| {
-//             const T = @Int(signedness, bits);
-//             // std.debug.print("=== {any} ===\n", .{T});
-//             const IF = intCodec(T);
-//             const tv = intTestVector(T);
-//             for (tv.slice()) |value| {
-//                 var buf: [256]u8 = undefined;
-//                 var w = ByteWriter{ .buf = &buf };
-//                 try IF.write(&w, value);
-//                 // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-//                 try std.testing.expectEqual(w.pos, IF.encodedLength(value));
-//                 tt.checkFloat(w.slice());
-//                 var r = ByteReader{ .buf = w.slice() };
-//                 try std.testing.expectEqual(value, try IF.read(&r));
-//             }
-//         }
-//     }
-// }
+    inline for (bit_lengths) |bits| {
+        inline for (signs) |signedness| {
+            const T = @Int(signedness, bits);
+            // std.debug.print("=== {any} ===\n", .{T});
+            const IF = intCodec(T);
+            const tv = intTestVector(T);
+            for (tv.slice()) |value| {
+                var buf: [256]u8 = undefined;
+                var w = ByteWriter{ .buf = &buf };
+                try IF.write(&w, value);
+                // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
+                try std.testing.expectEqual(w.pos, IF.encodedLength(value));
+                tt.checkFloat(w.slice());
+                var r = ByteReader{ .buf = w.slice() };
+                try std.testing.expectEqual(value, try IF.read(&r));
+            }
+        }
+    }
+}
