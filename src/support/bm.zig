@@ -60,17 +60,18 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
             showRate(options.name, "encodedLength", numbers.len * options.repeats, &timer);
     }
 
-    var w = ByteWriter{ .gpa = gpa };
-    defer w.deinit();
+    const enc_buf = try gpa.alloc(u8, enc_size);
+    defer gpa.free(enc_buf);
 
+    var w = ByteWriter{ .buf = enc_buf };
     {
         var timer = try Timer.start();
         for (0..options.repeats) |_| {
-            w.restart();
+            w.pos = 0;
             for (numbers) |n| {
                 try codec.write(&w, n);
             }
-            assert(w.buf.items.len == enc_size);
+            assert(w.pos == enc_size);
         }
         if (options.output)
             showRate(options.name, "write", numbers.len * options.repeats, &timer);
@@ -87,7 +88,7 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
             for (0..numbers.len) |i| {
                 output[i] = try codec.read(&r);
             }
-            assert(w.buf.items.len == r.pos);
+            assert(w.pos == r.pos);
         }
         if (options.output)
             showRate(options.name, "read", numbers.len * options.repeats, &timer);
