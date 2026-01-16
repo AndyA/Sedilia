@@ -1,11 +1,12 @@
 const std = @import("std");
+const assert = std.debug.assert;
 
 pub fn wildMatch(pattern: []const u8, target: []const u8) bool {
     // std.debug.print("wildMatch(\"{s}\", \"{s}\")\n", .{ pattern, target });
-    var tpos: usize = 0;
     for (pattern, 0..) |c, i| {
         if (c == '*') {
             const tail = pattern[i + 1 ..];
+            var tpos = i;
             while (true) : (tpos += 1) {
                 if (wildMatch(tail, target[tpos..]))
                     return true;
@@ -13,15 +14,13 @@ pub fn wildMatch(pattern: []const u8, target: []const u8) bool {
             }
         }
 
-        if (tpos == target.len)
+        if (i == target.len)
             return false;
 
-        if (c != '?' and c != target[tpos])
+        if (c != '?' and c != target[i])
             return false;
-
-        tpos += 1;
     }
-    return tpos == target.len;
+    return pattern.len == target.len;
 }
 
 test {
