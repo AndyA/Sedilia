@@ -31,6 +31,8 @@ test {
     const cases = &[_]TC{
         .{ .pattern = "", .yes = &.{""}, .no = &.{"foo"} },
         .{ .pattern = "*", .yes = &.{ "Hello", "x", "" } },
+        .{ .pattern = "**", .yes = &.{ "Hello", "x", "" } },
+        .{ .pattern = "***", .yes = &.{ "Hello", "x", "" } },
         .{ .pattern = "Hello", .yes = &.{"Hello"}, .no = &.{ "x", "Hello, World" } },
         .{ .pattern = "A?C?E", .yes = &.{ "A?C?E", "AbCdE" }, .no = &.{ "AbcdE", "Hello, World" } },
         .{ .pattern = "Aa*Bb*Cc", .yes = &.{ "AaBbCc", "AaABbBCc" }, .no = &.{ "ABC", "abc" } },
