@@ -83,3 +83,10 @@
 [ Rocks/Batch/Write                        ]          1000000/   10000/1000:                53667 / s
 [ Rocks/Batch/Write                        ]          1000000/   20000/1000:                 7716 / s
 [ Rocks/Batch/IndexLike                    ]        100000000/     100/1000:              1250790 / s
+2026-01-16T18:31:05+00:00 - b9b0ffd - ample - 0.16.0-dev.2223+4f16e80ce
+[ IbexNumber/f64                           ]                  encodedLength:            528794910 / s
+[ IbexNumber/f64                           ]                          write:             86947177 / s
+[ IbexNumber/f64                           ]                           read:            165968984 / s
+[ IbexInt/lengths                          ]                  encodedLength:           2625657341 / s
+[ IbexInt/lengths                          ]                          write:           1686214530 / s
+[ IbexInt/lengths                          ]                           read:           1208514577 / s
