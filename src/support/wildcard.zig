@@ -3,21 +3,19 @@ const assert = std.debug.assert;
 
 pub fn wildMatch(pattern: []const u8, target: []const u8) bool {
     // std.debug.print("wildMatch(\"{s}\", \"{s}\")\n", .{ pattern, target });
-    for (pattern, 0..) |c, i| {
+    for (pattern, 0..) |c, pp| {
         if (c == '*') {
-            const tail = pattern[i + 1 ..];
-            var tpos = i;
-            while (true) : (tpos += 1) {
-                if (wildMatch(tail, target[tpos..]))
+            const tail = pattern[pp + 1 ..];
+            for (pp..target.len + 1) |tp|
+                if (wildMatch(tail, target[tp..]))
                     return true;
-                if (tpos == target.len) return false;
-            }
+            return false;
         }
 
-        if (i == target.len)
+        if (pp == target.len)
             return false;
 
-        if (c != '?' and c != target[i])
+        if (c != '?' and c != target[pp])
             return false;
     }
     return pattern.len == target.len;
