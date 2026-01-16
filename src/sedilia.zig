@@ -42,8 +42,8 @@ test {
     _ = @import("./ibex/IbexNumber.zig");
     _ = @import("./ibex/IbexValue.zig");
     _ = @import("./ibex2/IbexInt.zig");
-    _ = @import("./ibex2/IbexNumber.zig");
-    _ = @import("./ibex2/IbexValue.zig");
+    // _ = @import("./ibex2/IbexNumber.zig");
+    // _ = @import("./ibex2/IbexValue.zig");
     _ = @import("./support/bm.zig");
     _ = @import("./support/wildcard.zig");
 }

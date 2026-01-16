@@ -7,6 +7,7 @@ const bm = @import("./support/bm.zig");
 
 const IbexNumber = @import("./ibex/IbexNumber.zig").IbexNumber;
 const IbexInt = @import("./ibex/IbexInt.zig");
+const IbexInt2 = @import("./ibex2/IbexInt.zig");
 
 const Benchmarks = struct {
     const Self = @This();
@@ -25,6 +26,12 @@ const Benchmarks = struct {
         const numbers = try bm.loadTestData(i64, self.io, self.gpa, "ref/testdata/i64lengths.bin");
         defer self.gpa.free(numbers);
         try bm.benchmarkCodec(self.gpa, IbexInt, numbers, .{ .repeats = 5000, .name = name });
+    }
+
+    pub fn @"IbexInt2/lengths"(self: *Self, comptime name: []const u8) !void {
+        const numbers = try bm.loadTestData(i64, self.io, self.gpa, "ref/testdata/i64lengths.bin");
+        defer self.gpa.free(numbers);
+        try bm.benchmarkCodecV2(self.gpa, IbexInt2, numbers, .{ .repeats = 5000, .name = name });
     }
 };
 

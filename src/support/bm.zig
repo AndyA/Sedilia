@@ -98,3 +98,57 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
         assert(n == output[i]);
     }
 }
+
+pub fn benchmarkCodecV2(gpa: Allocator, codec: anytype, numbers: anytype, options: BMOptions) !void {
+    var enc_size: usize = undefined;
+    const CT = @typeInfo(@TypeOf(numbers)).pointer.child;
+
+    {
+        var timer = try Timer.start();
+        for (0..options.repeats) |_| {
+            enc_size = 0;
+            for (numbers) |n| {
+                enc_size += codec.encodedLength(n);
+            }
+        }
+        if (options.output)
+            showRate(options.name, "encodedLength", numbers.len * options.repeats, &timer);
+    }
+
+    const enc_buf = try gpa.alloc(u8, enc_size);
+    defer gpa.free(enc_buf);
+
+    {
+        var timer = try Timer.start();
+        for (0..options.repeats) |_| {
+            var w = Writer.fixed(enc_buf);
+            // defer w.deinit();
+            // w.pos = 0;
+            for (numbers) |n| {
+                try codec.write(&w, n);
+            }
+            // assert(w.pos == enc_size);
+        }
+        if (options.output)
+            showRate(options.name, "write", numbers.len * options.repeats, &timer);
+    }
+
+    const output = try gpa.alloc(CT, numbers.len);
+    defer gpa.free(output);
+
+    {
+        var timer = try Timer.start();
+        for (0..options.repeats) |_| {
+            var r = Reader.fixed(enc_buf);
+            for (0..numbers.len) |i| {
+                output[i] = try codec.read(&r);
+            }
+        }
+        if (options.output)
+            showRate(options.name, "read", numbers.len * options.repeats, &timer);
+    }
+
+    for (numbers, 0..) |n, i| {
+        assert(n == output[i]);
+    }
+}
