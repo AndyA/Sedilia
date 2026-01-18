@@ -73,6 +73,7 @@ fn isOverflow(comptime T: type, value: anytype) bool {
         (value < -math.floatMax(T) or
             value > math.floatMax(T));
 }
+
 pub fn floatCodec(comptime T: type) type {
     if (T == f80) {
         const codec = floatCodec(f128);
