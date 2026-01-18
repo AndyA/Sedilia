@@ -154,17 +154,17 @@ test intCodec {
         inline for (signs) |signedness| {
             const T = @Int(signedness, bits);
             // std.debug.print("=== {any} ===\n", .{T});
-            const IF = intCodec(T);
+            const codec = intCodec(T);
             const tv = intTestVector(T);
             for (tv.slice()) |value| {
                 var buf: [256]u8 = undefined;
                 var w = ByteWriter{ .buf = &buf };
-                try IF.write(&w, value);
+                try codec.write(&w, value);
                 // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-                try std.testing.expectEqual(w.pos, IF.encodedLength(value));
+                try std.testing.expectEqual(w.pos, codec.encodedLength(value));
                 tt.checkFloat(w.slice());
                 var r = ByteReader{ .buf = w.slice() };
-                try std.testing.expectEqual(value, try IF.read(&r));
+                try std.testing.expectEqual(value, try codec.read(&r));
             }
         }
     }
