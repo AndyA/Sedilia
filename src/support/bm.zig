@@ -14,6 +14,25 @@ pub fn bitCount(comptime T: type) usize {
     };
 }
 
+pub fn hexDump(mem: []const u8, offset: u16) void {
+    var pos: usize = 0;
+    while (pos < mem.len) : (pos += 16) {
+        var avail = @min(16, mem.len - pos);
+        const line = mem[pos .. pos + avail];
+        std.debug.print("{x:0>4} |", .{pos +% offset});
+        for (line) |byte|
+            std.debug.print(" {x:0>2}", .{byte});
+        while (avail < 16) : (avail += 1)
+            std.debug.print("   ", .{});
+        std.debug.print(" | ", .{});
+        for (line) |byte| {
+            const rep = if (std.ascii.isPrint(byte)) byte else '.';
+            std.debug.print("{c}", .{rep});
+        }
+        std.debug.print("\n", .{});
+    }
+}
+
 pub fn loadTestData(comptime T: type, io: std.Io, gpa: Allocator, file: []const u8) ![]T {
     const IT = @Int(.unsigned, bitCount(T));
 
@@ -77,6 +96,8 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
 
     const output = try gpa.alloc(CT, numbers.len);
     defer gpa.free(output);
+
+    // hexDump(enc_buf[0..0x80], 0);
 
     var r = ByteReader{ .buf = w.slice() };
     {
