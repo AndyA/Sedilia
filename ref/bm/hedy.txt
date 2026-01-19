@@ -2,3 +2,48 @@
 [ IbexNumber/f64                           ]       encodedLength:            141410755 / s
 [ IbexNumber/f64                           ]               write:             62049282 / s
 [ IbexNumber/f64                           ]                read:             82588883 / s
+2026-01-19T19:27:05+00:00 - 2cbe39a - hedy - 0.16.0-dev.2261+d6b3dd25a
+# average bytes: 3.35047
+[ IbexNumber/f64                           ]                  encodedLength:            146395846 / s
+[ IbexNumber/f64                           ]                          write:             59042368 / s
+[ IbexNumber/f64                           ]                           read:             86556051 / s
+# average bytes: 1.013859
+[ IbexInt/lengths                          ]                  encodedLength:           1126370087 / s
+[ IbexInt/lengths                          ]                          write:            605981542 / s
+[ IbexInt/lengths                          ]                           read:            616261284 / s
+# average bytes: 1.062447
+[ IbexInt/u7                               ]                  encodedLength:            801428641 / s
+[ IbexInt/u7                               ]                          write:            477319418 / s
+[ IbexInt/u7                               ]                           read:            491395387 / s
+# average bytes: 1.531072
+[ IbexInt/u8                               ]                  encodedLength:            239399339 / s
+[ IbexInt/u8                               ]                          write:            178043528 / s
+[ IbexInt/u8                               ]                           read:            176655602 / s
+# average bytes: 1.062743
+[ IbexInt/i8                               ]                  encodedLength:            805018880 / s
+[ IbexInt/i8                               ]                          write:            454786803 / s
+[ IbexInt/i8                               ]                           read:            494860925 / s
+# average bytes: 1.531309
+[ IbexInt/i9                               ]                  encodedLength:            238845630 / s
+[ IbexInt/i9                               ]                          write:            146894524 / s
+[ IbexInt/i9                               ]                           read:            165936884 / s
+# average bytes: 2.992409
+[ IbexInt/u16                              ]                  encodedLength:            833743964 / s
+[ IbexInt/u16                              ]                          write:            284172514 / s
+[ IbexInt/u16                              ]                           read:            333856085 / s
+# average bytes: 2.98485
+[ IbexInt/i16                              ]                  encodedLength:            803790661 / s
+[ IbexInt/i16                              ]                          write:            163263548 / s
+[ IbexInt/i16                              ]                           read:            145613487 / s
+# average bytes: 4.996092
+[ IbexInt/u32                              ]                  encodedLength:            599830276 / s
+[ IbexInt/u32                              ]                          write:            175380758 / s
+[ IbexInt/u32                              ]                           read:            245968289 / s
+# average bytes: 4.992104
+[ IbexInt/i32                              ]                  encodedLength:            572614125 / s
+[ IbexInt/i32                              ]                          write:            119744843 / s
+[ IbexInt/i32                              ]                           read:            120369852 / s
+# average bytes: 8.992049
+[ IbexInt/i64                              ]                  encodedLength:            380629767 / s
+[ IbexInt/i64                              ]                          write:             82588629 / s
+[ IbexInt/i64                              ]                           read:             97341249 / s
