@@ -61,6 +61,10 @@ const Benchmarks = struct {
         try benchmarkIntRange(self.gpa, i8, .{ .repeats = BASE * 2, .name = name });
     }
 
+    pub fn @"IbexInt/i9"(self: *Self, comptime name: []const u8) !void {
+        try benchmarkIntRange(self.gpa, i9, .{ .repeats = BASE * 2, .name = name });
+    }
+
     pub fn @"IbexInt/u16"(self: *Self, comptime name: []const u8) !void {
         try benchmarkIntRange(self.gpa, u16, .{ .repeats = BASE * 2, .name = name });
     }

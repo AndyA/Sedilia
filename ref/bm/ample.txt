@@ -124,3 +124,48 @@
 [ IbexInt/i64                              ]                  encodedLength:            839581803 / s
 [ IbexInt/i64                              ]                          write:            197299532 / s
 [ IbexInt/i64                              ]                           read:            191543948 / s
+2026-01-19T19:25:13+00:00 - d8d9590 - ample - 0.16.0-dev.2261+d6b3dd25a
+# average bytes: 3.35047
+[ IbexNumber/f64                           ]                  encodedLength:            437062204 / s
+[ IbexNumber/f64                           ]                          write:            108227937 / s
+[ IbexNumber/f64                           ]                           read:            167170547 / s
+# average bytes: 1.013859
+[ IbexInt/lengths                          ]                  encodedLength:           2709350680 / s
+[ IbexInt/lengths                          ]                          write:           2227296538 / s
+[ IbexInt/lengths                          ]                           read:           1252118820 / s
+# average bytes: 1.062447
+[ IbexInt/u7                               ]                  encodedLength:           1629834113 / s
+[ IbexInt/u7                               ]                          write:           1450224576 / s
+[ IbexInt/u7                               ]                           read:            982273403 / s
+# average bytes: 1.531072
+[ IbexInt/u8                               ]                  encodedLength:            407348859 / s
+[ IbexInt/u8                               ]                          write:            340359686 / s
+[ IbexInt/u8                               ]                           read:            343904706 / s
+# average bytes: 1.062743
+[ IbexInt/i8                               ]                  encodedLength:           1599920964 / s
+[ IbexInt/i8                               ]                          write:           1252652556 / s
+[ IbexInt/i8                               ]                           read:            976389042 / s
+# average bytes: 1.531309
+[ IbexInt/i9                               ]                  encodedLength:            403714775 / s
+[ IbexInt/i9                               ]                          write:            259250190 / s
+[ IbexInt/i9                               ]                           read:            337857603 / s
+# average bytes: 2.992409
+[ IbexInt/u16                              ]                  encodedLength:           1882254323 / s
+[ IbexInt/u16                              ]                          write:            660768427 / s
+[ IbexInt/u16                              ]                           read:            919122856 / s
+# average bytes: 2.98485
+[ IbexInt/i16                              ]                  encodedLength:           1778510920 / s
+[ IbexInt/i16                              ]                          write:            291590146 / s
+[ IbexInt/i16                              ]                           read:            293196306 / s
+# average bytes: 4.996092
+[ IbexInt/u32                              ]                  encodedLength:           1326189740 / s
+[ IbexInt/u32                              ]                          write:            442448510 / s
+[ IbexInt/u32                              ]                           read:            613393038 / s
+# average bytes: 4.992104
+[ IbexInt/i32                              ]                  encodedLength:           1272457821 / s
+[ IbexInt/i32                              ]                          write:            236831839 / s
+[ IbexInt/i32                              ]                           read:            245661128 / s
+# average bytes: 8.992049
+[ IbexInt/i64                              ]                  encodedLength:           1006953349 / s
+[ IbexInt/i64                              ]                          write:            198107780 / s
+[ IbexInt/i64                              ]                           read:            195497924 / s
