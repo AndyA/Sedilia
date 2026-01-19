@@ -73,8 +73,12 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
                 enc_size += codec.encodedLength(n);
             }
         }
-        if (options.output)
+        if (options.output) {
+            const avg_bytes: f64 = @as(f64, @floatFromInt(enc_size)) /
+                @as(f64, @floatFromInt(numbers.len));
+            std.debug.print("# average bytes: {d}\n", .{avg_bytes});
             showRate(options.name, "encodedLength", numbers.len * options.repeats, &timer);
+        }
     }
 
     const enc_buf = try gpa.alloc(u8, enc_size);

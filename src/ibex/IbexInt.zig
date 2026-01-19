@@ -60,7 +60,7 @@ fn writeBytes(w: *ByteWriter, byte_count: usize, value: i64) IbexError!void {
 
 pub fn encodedLength(value: i64) usize {
     const abs = if (value < 0) ~value else value;
-    inline for (LIMITS, 1..) |limit, len| {
+    for (LIMITS, 1..) |limit, len| {
         if (abs < limit)
             return len;
     }

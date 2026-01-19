@@ -49,6 +49,10 @@ const Benchmarks = struct {
         try bm.benchmarkCodec(self.gpa, IbexInt, numbers, .{ .repeats = BASE * 2, .name = name });
     }
 
+    pub fn @"IbexInt/u7"(self: *Self, comptime name: []const u8) !void {
+        try benchmarkIntRange(self.gpa, u7, .{ .repeats = BASE * 2, .name = name });
+    }
+
     pub fn @"IbexInt/u8"(self: *Self, comptime name: []const u8) !void {
         try benchmarkIntRange(self.gpa, u8, .{ .repeats = BASE * 2, .name = name });
     }
