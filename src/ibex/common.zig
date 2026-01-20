@@ -8,7 +8,7 @@ const ByteReader = bytes.ByteReader;
 const IbexInt = @import("./IbexInt.zig");
 const mantissa = @import("./IbexNumber/mantissa.zig");
 
-fn makeSkipper(comptime check: fn (tag: IbexTag) bool) type {
+fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
     return struct {
         fn skipNumPos(r: *ByteReader) IbexError!void {
             try IbexInt.skip(r);
@@ -58,8 +58,10 @@ fn makeSkipper(comptime check: fn (tag: IbexTag) bool) type {
         pub fn impl(r: *ByteReader) IbexError!void {
             const nb = try r.next();
             const tag: IbexTag = @enumFromInt(nb);
-            if (!check(tag))
-                return IbexError.InvalidData;
+            if (check) |ch| {
+                if (!ch(tag))
+                    return IbexError.InvalidData;
+            }
             return switch (tag) {
                 .End => IbexError.InvalidData, // may not occur on its own
                 .Null => {},
@@ -88,6 +90,6 @@ fn makeSkipper(comptime check: fn (tag: IbexTag) bool) type {
     };
 }
 
-pub const skip = makeSkipper(IbexTag.valid).impl;
+pub const skip = makeSkipper(null).impl;
 pub const checkIndex = makeSkipper(IbexTag.indexSafe).impl;
 pub const checkOryx = makeSkipper(IbexTag.oryxSafe).impl;
