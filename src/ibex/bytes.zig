@@ -30,6 +30,11 @@ pub const ByteReader = struct {
     pub fn negate(self: *Self) void {
         self.flip = ~self.flip;
     }
+
+    pub fn skip(self: *Self, bytes: usize) void {
+        assert(self.pos + bytes <= self.buf.len);
+        self.pos += bytes;
+    }
 };
 
 pub const ByteWriter = struct {

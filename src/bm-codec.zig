@@ -46,43 +46,43 @@ const Benchmarks = struct {
     pub fn @"IbexInt/lengths"(self: *Self, comptime name: []const u8) !void {
         const numbers = try bm.loadTestData(i64, self.io, self.gpa, "ref/testdata/i64lengths.bin");
         defer self.gpa.free(numbers);
-        try bm.benchmarkCodec(self.gpa, IbexInt, numbers, .{ .repeats = BASE * 2, .name = name });
+        try bm.benchmarkCodec(self.gpa, IbexInt, numbers, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/u7"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, u7, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, u7, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/u8"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, u8, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, u8, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/i8"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, i8, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, i8, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/i9"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, i9, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, i9, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/u16"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, u16, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, u16, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/i16"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, i16, .{ .repeats = BASE * 2, .name = name });
+        try benchmarkIntRange(self.gpa, i16, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/u32"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, u32, .{ .repeats = BASE * 1, .name = name });
+        try benchmarkIntRange(self.gpa, u32, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/i32"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, i32, .{ .repeats = BASE * 1, .name = name });
+        try benchmarkIntRange(self.gpa, i32, .{ .repeats = BASE, .name = name });
     }
 
     pub fn @"IbexInt/i64"(self: *Self, comptime name: []const u8) !void {
-        try benchmarkIntRange(self.gpa, i64, .{ .repeats = BASE * 1, .name = name });
+        try benchmarkIntRange(self.gpa, i64, .{ .repeats = BASE, .name = name });
     }
 };
 

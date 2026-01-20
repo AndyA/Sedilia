@@ -10,6 +10,7 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexInt = @import("../IbexInt.zig");
 const mantissa = @import("./mantissa.zig");
+const common = @import("./common.zig");
 
 fn FloatBits(comptime T: type) type {
     return struct {
@@ -204,6 +205,10 @@ pub fn floatCodec(comptime T: type) type {
                 .NumNeg => readNumNeg(r),
                 else => IbexError.InvalidData,
             };
+        }
+
+        pub fn skip(r: *ByteReader) IbexError!void {
+            return common.skip(r);
         }
     };
 }

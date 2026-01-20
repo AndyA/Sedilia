@@ -29,35 +29,6 @@ const LIMITS: [MAX_VALUE_BYTES]i64 = blk: {
     break :blk limits;
 };
 
-fn repLength(tag: u8) usize {
-    if (tag >= LINEAR_HI)
-        return tag - LINEAR_HI + 1
-    else if (tag < LINEAR_LO)
-        return LINEAR_LO - tag
-    else
-        return 1;
-}
-
-fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) IbexError!i64 {
-    assert(byte_count <= MAX_VALUE_BYTES);
-    var acc: i64 = 0;
-    for (0..byte_count) |_| {
-        acc = (acc << 8) + (try r.next() ^ flip);
-    }
-    if (acc < 0 or acc > MAX_ENCODED)
-        return IbexError.InvalidData;
-    return acc;
-}
-
-fn writeBytes(w: *ByteWriter, byte_count: usize, value: i64) IbexError!void {
-    assert(byte_count <= MAX_VALUE_BYTES);
-    for (0..byte_count) |i| {
-        const pos: u6 = @intCast(byte_count - 1 - i);
-        const byte: u8 = @intCast((value >> (pos * 8)) & 0xff);
-        try w.put(byte);
-    }
-}
-
 pub fn encodedLength(value: i64) usize {
     const abs = if (value < 0) ~value else value;
     for (LIMITS, 1..) |limit, len| {
@@ -71,6 +42,38 @@ test encodedLength {
     for (test_cases) |tc| {
         try std.testing.expectEqual(tc.buf.len, IbexInt.encodedLength(tc.want));
     }
+}
+
+fn repLength(tag: u8) usize {
+    if (tag >= LINEAR_HI)
+        return tag - LINEAR_HI + 1
+    else if (tag < LINEAR_LO)
+        return LINEAR_LO - tag
+    else
+        return 0;
+}
+
+pub fn skip(r: *ByteReader) !void {
+    r.skip(repLength(try r.next()));
+}
+
+test skip {
+    for (test_cases) |tc| {
+        var r = ByteReader{ .buf = tc.buf, .flip = tc.flip };
+        try IbexInt.skip(&r);
+        try std.testing.expectEqual(tc.buf.len, r.pos);
+    }
+}
+
+fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) IbexError!i64 {
+    assert(byte_count <= MAX_VALUE_BYTES);
+    var acc: i64 = 0;
+    for (0..byte_count) |_| {
+        acc = (acc << 8) + (try r.next() ^ flip);
+    }
+    if (acc < 0 or acc > MAX_ENCODED)
+        return IbexError.InvalidData;
+    return acc;
 }
 
 pub fn read(r: *ByteReader) IbexError!i64 {
@@ -90,6 +93,15 @@ test read {
         var r = ByteReader{ .buf = tc.buf, .flip = tc.flip };
         try std.testing.expectEqual(tc.want, IbexInt.read(&r));
         try std.testing.expectEqual(tc.buf.len, r.pos);
+    }
+}
+
+fn writeBytes(w: *ByteWriter, byte_count: usize, value: i64) IbexError!void {
+    assert(byte_count <= MAX_VALUE_BYTES);
+    for (0..byte_count) |i| {
+        const pos: u6 = @intCast(byte_count - 1 - i);
+        const byte: u8 = @intCast((value >> (pos * 8)) & 0xff);
+        try w.put(byte);
     }
 }
 

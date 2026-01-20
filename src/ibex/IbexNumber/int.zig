@@ -10,6 +10,7 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexInt = @import("../IbexInt.zig");
 const mantissa = @import("./mantissa.zig");
+const common = @import("./common.zig");
 
 pub fn intCodec(comptime T: type) type {
     const info = @typeInfo(T).int;
@@ -108,6 +109,10 @@ pub fn intCodec(comptime T: type) type {
                 .NumNegNaN, .NumPosNaN => IbexError.Overflow,
                 else => IbexError.InvalidData,
             };
+        }
+
+        pub fn skip(r: *ByteReader) IbexError!void {
+            return common.skip(r);
         }
     };
 }

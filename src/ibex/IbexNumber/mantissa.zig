@@ -112,3 +112,19 @@ test readMantissa {
         try std.testing.expectEqual(tc.mant, got);
     }
 }
+
+pub fn skipMantissa(r: *ByteReader) IbexError!void {
+    while (true) {
+        const nb = try r.next();
+        if (nb & 0x01 == 0)
+            break;
+    }
+}
+
+test skipMantissa {
+    inline for (general_cases ++ read_cases) |tc| {
+        var r = ByteReader{ .buf = tc.bytes };
+        try skipMantissa(&r);
+        try std.testing.expectEqual(tc.bytes.len, r.pos);
+    }
+}
