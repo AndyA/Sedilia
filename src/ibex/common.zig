@@ -58,10 +58,11 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
         pub fn skipper(r: *ByteReader) IbexError!void {
             const nb = try r.next();
             const tag: IbexTag = @enumFromInt(nb);
-            if (check) |ch| {
+
+            if (check) |ch|
                 if (!ch(tag))
                     return IbexError.InvalidData;
-            }
+
             return switch (tag) {
                 .End => IbexError.InvalidData, // may not occur on its own
                 .Null, .False, .True => {},
