@@ -34,8 +34,22 @@ pub const IbexTag = enum(u8) {
     OryxArray = 0x13, // count: IbexInt, values: []IbexValue
     OryxObject = 0x14, // class: IbexInt, count: IbexInt, values: []IbexValue
 
+    pub fn valid(tag: IbexTag) bool {
+        return @intFromEnum(tag) <= @intFromEnum(IbexTag.OryxObject);
+    }
+
     pub fn indexSafe(tag: IbexTag) bool {
         return @intFromEnum(tag) < @intFromEnum(IbexTag.Multi);
+    }
+
+    pub fn oryxSafe(tag: IbexTag) bool {
+        return switch (tag) {
+            .Null, .False, .True => true,
+            .NumNegNaN, .NumNegInf, .NumNeg, .NumNegZero => true,
+            .NumPosZero, .NumPos, .NumPosInf, .NumPosNaN => true,
+            .OryxInt, .OryxString, .OryxClass, .OryxArray, .OryxObject => true,
+            else => false,
+        };
     }
 };
 
