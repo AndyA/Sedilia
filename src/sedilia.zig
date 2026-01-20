@@ -43,4 +43,5 @@ test {
     _ = @import("./ibex/IbexValue.zig");
     _ = @import("./support/bm.zig");
     _ = @import("./support/wildcard.zig");
+    _ = @import("./mule.zig");
 }

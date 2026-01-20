@@ -60,6 +60,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_exe_tests.step);
 
     // Benchmarks
+    _ = benchmark(b, "mule", target, optimize);
     _ = benchmark(b, "bm-codec", target, optimize);
     const bm_rocks_exe = benchmark(b, "bm-rocks", target, optimize);
     bm_rocks_exe.root_module.addImport("rocksdb", rdb_bindings);
