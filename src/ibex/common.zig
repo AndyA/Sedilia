@@ -64,18 +64,13 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
             }
             return switch (tag) {
                 .End => IbexError.InvalidData, // may not occur on its own
-                .Null => {},
-                .False => {},
-                .True => {},
+                .Null, .False, .True => {},
                 .String => skipPastZero(r),
-                .NumNegNaN => {},
-                .NumNegInf => {},
-                .NumNegZero => {},
-                .NumPosZero => {},
-                .NumPosInf => {},
-                .NumPosNaN => {},
-                .NumPos => skipNumPos(r),
+                .NumNegNaN, .NumNegInf => {},
                 .NumNeg => skipNumNeg(r),
+                .NumNegZero, .NumPosZero => {},
+                .NumPos => skipNumPos(r),
+                .NumPosInf, .NumPosNaN => {},
                 .Array => skipPastEnd(r),
                 .Object => skipPastEnd(r),
                 .Multi => skipPastEnd(r),
