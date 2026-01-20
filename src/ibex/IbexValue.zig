@@ -9,8 +9,8 @@ pub const IbexValue = union(u8) {
     boolean: bool,
     int: i64,
     float: f64,
-    array: []Self,
-    object: []Self, // like an array but the first item must be a class
+    array: []const Self,
+    object: []const Self, // like an array but the first item must be a class
     string: []const u8,
     class: *const IbexClass,
     // an IbexValue can include literal fields of JSON or Ibex/Oryx
