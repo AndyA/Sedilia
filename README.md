@@ -3,17 +3,16 @@ Oryx: fast encoding for object
 
 ## Conversions
 
-|             | ⇢ Ibex/Oryx | ⇢ JSON | ⇢ JSONValue | ⇢ IbexValue |
-| ----------- | ----------: | -----: | ----------: | ----------: |
-| Ibex/Oryx ⇢ |           🟰 |      ✔ |           ✘ |           ✔ |
-| JSON ⇢      |           ✔ |      🟰 |           ✔ |           ✔ |
-| JSONValue ⇢ |           ✔ |      ✔ |           🟰 |           ✘ |
-| IbexValue ⇢ |           ✔ |      ✔ |           ✘ |           🟰 |
+|             | ⇢ Ibex/Oryx | ⇢ JSON | ⇢ IbexValue | ⇢ zig |
+| ----------- | ----------: | -----: | ----------: | ----: |
+| Ibex/Oryx ⇢ |           🟰 |      ✔ |           ✔ |     ✔ |
+| JSON ⇢      |           ✔ |      🟰 |           ✔ |     𐄂 |
+| IbexValue ⇢ |           ✔ |      ✔ |           🟰 |     ✔ |
+| zig ⇢       |           ✔ |      𐄂 |           ✔ |     🟰 |
 
 ## Thinks
 
 - Ibex/Oryx native support for JS, Python (obv zig)
-- Remove per-length offset from `IbexInt`.
 
 ## Ibex
 
