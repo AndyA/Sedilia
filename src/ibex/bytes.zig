@@ -15,25 +15,29 @@ pub const ByteReader = struct {
         return self.pos == self.buf.len;
     }
 
-    pub fn peek(self: *Self) u8 {
-        assert(self.pos < self.buf.len);
+    pub fn peek(self: *Self) IbexError!u8 {
+        if (self.eof())
+            return IbexError.BufferEmpty;
         return self.buf[self.pos] ^ self.flip;
     }
 
     pub fn next(self: *Self) IbexError!u8 {
-        if (self.eof())
-            return IbexError.BufferEmpty;
         defer self.pos += 1;
-        return self.peek();
+        return try self.peek();
     }
 
     pub fn negate(self: *Self) void {
         self.flip = ~self.flip;
     }
 
-    pub fn skip(self: *Self, bytes: usize) void {
-        assert(self.pos + bytes <= self.buf.len);
+    pub fn skip(self: *Self, bytes: usize) !void {
+        if (self.pos + bytes > self.buf.len)
+            return IbexError.BufferEmpty;
         self.pos += bytes;
+    }
+
+    pub fn tail(self: *const Self) []const u8 {
+        return self.buf[self.pos..];
     }
 };
 

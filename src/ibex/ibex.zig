@@ -30,7 +30,7 @@ pub const IbexTag = enum(u8) {
     OryxInt = 0x10, // value: IbexInt
     OryxString = 0x11, // len: IbexInt, str: []u8
 
-    OryxClass = 0x12, // parent: IbexInt, count: IbexInt, keys: []{len: IbexInt, str: []u8}
+    OryxClass = 0x12, // parent: IbexInt, count: IbexInt, keys: []IbexValue
     OryxArray = 0x13, // count: IbexInt, values: []IbexValue
     OryxObject = 0x14, // class: IbexInt, count: IbexInt, values: []IbexValue
 

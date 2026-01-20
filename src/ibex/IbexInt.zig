@@ -54,7 +54,7 @@ fn repLength(tag: u8) usize {
 }
 
 pub fn skip(r: *ByteReader) !void {
-    r.skip(repLength(try r.next()));
+    try r.skip(repLength(try r.next()));
 }
 
 test skip {

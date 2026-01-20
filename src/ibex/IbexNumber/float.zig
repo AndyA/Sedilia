@@ -10,7 +10,7 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexInt = @import("../IbexInt.zig");
 const mantissa = @import("./mantissa.zig");
-const common = @import("./common.zig");
+const common = @import("../common.zig");
 
 fn FloatBits(comptime T: type) type {
     return struct {
