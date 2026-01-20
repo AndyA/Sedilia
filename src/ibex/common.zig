@@ -26,7 +26,7 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
                 const nb = try r.peek();
                 const tag: IbexTag = @enumFromInt(nb);
                 if (tag == .End) break;
-                try skip(r);
+                try skipper(r);
             }
 
             try r.next(); // swallow .End
@@ -47,7 +47,7 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
         fn skipOryxArray(r: *ByteReader) IbexError!void {
             const len = try IbexInt.read(r);
             for (0..len) |_|
-                try skip(r);
+                try skipper(r);
         }
 
         fn skipOryxObject(r: *ByteReader) IbexError!void {
@@ -55,7 +55,7 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
             try skipOryxArray(r);
         }
 
-        pub fn impl(r: *ByteReader) IbexError!void {
+        pub fn skipper(r: *ByteReader) IbexError!void {
             const nb = try r.next();
             const tag: IbexTag = @enumFromInt(nb);
             if (check) |ch| {
@@ -90,6 +90,6 @@ fn makeSkipper(comptime check: ?fn (tag: IbexTag) bool) type {
     };
 }
 
-pub const skip = makeSkipper(null).impl;
-pub const checkIndex = makeSkipper(IbexTag.indexSafe).impl;
-pub const checkOryx = makeSkipper(IbexTag.oryxSafe).impl;
+pub const skip = makeSkipper(null).skipper;
+pub const checkIndex = makeSkipper(IbexTag.indexSafe).skipper;
+pub const checkOryx = makeSkipper(IbexTag.oryxSafe).skipper;
