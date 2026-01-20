@@ -2,6 +2,9 @@ const std = @import("std");
 
 pub const IbexClass = struct {}; // TODO
 
+// IbexValues need at least two associated arenas - so why not limit indexes to 32
+// bits, lengths to 24 bits - so a single tagged value fits in 64 bits. Or 8/32/32.
+
 pub const IbexValue = union(u8) {
     const Self = @This();
 
