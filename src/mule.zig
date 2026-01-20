@@ -95,7 +95,6 @@ fn toDecimalV3(value: u64, buf: *[16]u8) void {
         @intCast(value / 100000000),
         @intCast(value % 100000000),
     };
-
     const d1: @Vector(4, u16) = @bitCast(v1 / k10000);
     const m1: @Vector(4, u16) = @bitCast(v1 % k10000);
 
