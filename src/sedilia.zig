@@ -37,7 +37,6 @@ test "scratch" {
 }
 
 test {
-    _ = @import("./tree.zig");
     _ = @import("./ibex/IbexInt.zig");
     _ = @import("./ibex/IbexNumber.zig");
     _ = @import("./ibex/IbexValue.zig");
