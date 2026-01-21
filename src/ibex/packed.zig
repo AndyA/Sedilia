@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const expectEqual = std.testing.expectEqual;
 
-pub fn PackedSlice(comptime T: type, comptime bits: usize) type {
+pub fn Slice(comptime T: type, comptime bits: usize) type {
     return packed struct {
         const Self = @This();
         pub const Type = []const T;
@@ -20,9 +20,9 @@ pub fn PackedSlice(comptime T: type, comptime bits: usize) type {
     };
 }
 
-test PackedSlice {
-    try expectEqual(120, @bitSizeOf(PackedSlice(u8, 120)));
-    const is = PackedSlice(u8, 120).init("Hello");
+test Slice {
+    try expectEqual(120, @bitSizeOf(Slice(u8, 120)));
+    const is = Slice(u8, 120).init("Hello");
     try expectEqual("Hello", is.get());
 }
 

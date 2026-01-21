@@ -2,18 +2,16 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
-const OOM = error{OutOfMemory};
-
 const IndexType = u32;
 const IndexMap = std.StringHashMapUnmanaged(IndexType);
 
-fn indexMapForNames(gpa: Allocator, names: []const []const u8) OOM!IndexMap {
+fn indexMapForNames(gpa: Allocator, names: []const []const u8) !IndexMap {
     var index: IndexMap = .empty;
-    if (names.len > 0) {
-        try index.ensureTotalCapacity(gpa, @intCast(names.len));
-        for (names, 0..) |n, i|
-            index.putAssumeCapacity(n, @intCast(i));
-    }
+    if (names.len == 0)
+        return index;
+    try index.ensureTotalCapacity(gpa, @intCast(names.len));
+    for (names, 0..) |n, i|
+        index.putAssumeCapacity(n, @intCast(i));
     return index;
 }
 
@@ -95,7 +93,7 @@ pub const IbexShadow = struct {
         return self;
     }
 
-    pub fn getNext(self: *Self, gpa: Allocator, name: []const u8) OOM!*Self {
+    pub fn getNext(self: *Self, gpa: Allocator, name: []const u8) !*Self {
         const slot = try self.next.getOrPutContextAdapted(gpa, name, ctx, ctx);
         if (!slot.found_existing) {
             const key_name = try gpa.dupe(u8, name);
