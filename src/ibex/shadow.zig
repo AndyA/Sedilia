@@ -10,7 +10,7 @@ pub const IbexClass = struct {
 
     index: IndexMap = .empty,
     keys: []const []const u8,
-    shadow: *const IbexShadow,
+    shadow: *const IbexShadow, // non owning
 
     fn indexForKeys(gpa: Allocator, keys: []const []const u8) !IndexMap {
         var index: IndexMap = .empty;

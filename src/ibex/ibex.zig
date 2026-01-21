@@ -20,8 +20,8 @@ pub const IbexTag = enum(u8) {
     NumPosInf = 0x0b,
     NumPosNaN = 0x0c,
 
-    Array = 0x0d,
-    Object = 0x0e,
+    Array = 0x0d, // (elt)* End
+    Object = 0x0e, // (k, v)* End
 
     // Behaves like Array; represents something like NDJSON - a sequence of objects.
     Multi = 0x0f,

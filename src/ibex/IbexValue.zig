@@ -87,7 +87,7 @@ const IbexValue = packed struct {
     };
 
     tag: Tag,
-    p: Payload,
+    payload: Payload,
 
     pub fn tagType(comptime tag: Tag) type {
         return @FieldType(Payload, @tagName(tag)).Type;
@@ -96,12 +96,12 @@ const IbexValue = packed struct {
     pub fn init(comptime tag: Tag, value: tagType(tag)) Self {
         const FT = @FieldType(Payload, @tagName(tag));
         const payload = @unionInit(Payload, @tagName(tag), FT.init(value));
-        return Self{ .tag = tag, .p = payload };
+        return Self{ .tag = tag, .payload = payload };
     }
 
     pub fn get(self: Self, comptime tag: Tag) tagType(tag) {
         assert(tag == self.tag);
-        return @field(self.p, @tagName(tag)).get();
+        return @field(self.payload, @tagName(tag)).get();
     }
 
     pub fn getObject(self: Self) struct { *const IbexClass, []const Self } {
