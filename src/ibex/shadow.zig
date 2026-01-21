@@ -3,23 +3,24 @@ const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
 const IndexType = usize;
-const IndexMap = std.StringHashMapUnmanaged(IndexType);
-
-fn indexMapForNames(gpa: Allocator, names: []const []const u8) !IndexMap {
-    var index: IndexMap = .empty;
-    if (names.len == 0)
-        return index;
-    try index.ensureTotalCapacity(gpa, @intCast(names.len));
-    for (names, 0..) |n, i|
-        index.putAssumeCapacity(n, @intCast(i));
-    return index;
-}
 
 pub const IbexClass = struct {
     const Self = @This();
+    const IndexMap = std.StringHashMapUnmanaged(IndexType);
 
-    index_map: IndexMap = .empty,
+    index: IndexMap = .empty,
     keys: []const []const u8,
+    shadow: *const IbexShadow,
+
+    fn indexForKeys(gpa: Allocator, keys: []const []const u8) !IndexMap {
+        var index: IndexMap = .empty;
+        if (keys.len == 0)
+            return index;
+        try index.ensureTotalCapacity(gpa, @intCast(keys.len));
+        for (keys, 0..) |n, i|
+            index.putAssumeCapacity(n, @intCast(i));
+        return index;
+    }
 
     pub fn initFromShadow(gpa: Allocator, shadow: *const IbexShadow) !Self {
         const size = shadow.size();
@@ -34,21 +35,22 @@ pub const IbexClass = struct {
         }
 
         const self = Self{
-            .index_map = try indexMapForNames(gpa, keys),
+            .index = try indexForKeys(gpa, keys),
             .keys = keys,
+            .shadow = shadow,
         };
 
         return self;
     }
 
     pub fn deinit(self: *Self, gpa: Allocator) void {
-        self.index_map.deinit(gpa);
+        self.index.deinit(gpa);
         gpa.free(self.keys);
         self.* = undefined;
     }
 
     pub fn get(self: Self, key: []const u8) ?IndexType {
-        return self.index_map.get(key);
+        return self.index.get(key);
     }
 };
 
