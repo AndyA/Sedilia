@@ -116,7 +116,9 @@ const IbexValue = packed struct {
     pub fn stringify(self: Self, sfy: *Stringify) !void {
         switch (self.tag) {
             .null => try sfy.write(null),
-            inline .bool, .integer, .float, .string => |t| try sfy.write(self.get(t)),
+            inline .bool, .integer, .float, .string => |t| {
+                try sfy.write(self.get(t));
+            },
             .array => {
                 try sfy.beginArray();
                 for (self.get(.array)) |elt| {
