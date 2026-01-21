@@ -133,6 +133,12 @@ const IbexValue = packed struct {
                 }
                 try sfy.endObject();
             },
+            .class => unreachable,
+            .json => {
+                try sfy.beginWriteRaw();
+                try sfy.writer.writeAll(self.get(.json));
+                sfy.endWriteRaw();
+            },
             else => unreachable,
         }
     }
@@ -190,6 +196,11 @@ test "stringify" {
             .object,
             &[_]IV{ iv(.class, xy), iv(.integer, 123), iv(.integer, 456) },
             "{\"x\":123,\"y\":456}",
+        ),
+        t(
+            .array,
+            &[_]IV{ iv(.integer, 123), iv(.json, "[true]"), iv(.integer, 456) },
+            "[123,[true],456]",
         ),
     };
 
