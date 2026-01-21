@@ -3,12 +3,12 @@ Oryx: fast encoding for object
 
 ## Conversions
 
-|             | ⇢ Ibex/Oryx | ⇢ JSON | ⇢ IbexValue | ⇢ zig |
-| ----------- | ----------: | -----: | ----------: | ----: |
-| Ibex/Oryx ⇢ |             |      ✔ |           ✔ |     ✔ |
-| JSON ⇢      |           ✔ |        |           ✔ |     𐄂 |
-| IbexValue ⇢ |           ✔ |      ✔ |             |     𐄂 |
-| zig ⇢       |           ✔ |      𐄂 |           𐄂 |       |
+|             | ⇢ Ibex/Oryx |                ⇢ JSON | ⇢ IbexValue | ⇢ zig |
+| ----------- | ----------: | --------------------: | ----------: | ----: |
+| Ibex/Oryx ⇢ |             |                     ✔ |           ✔ |     ✔ |
+| JSON ⇢      |           ✔ |                       |           ✔ |     ✔ |
+| IbexValue ⇢ |           ✔ | `IbexValue.stringify` |             |     𐄂 |
+| zig ⇢       |           ✔ |                     ✔ |           𐄂 |       |
 
 ## Thinks
 
