@@ -34,13 +34,11 @@ pub const IbexClass = struct {
             keys[class.index] = class.key;
         }
 
-        const self = Self{
+        return Self{
             .index = try indexForKeys(gpa, keys),
             .keys = keys,
             .shadow = shadow,
         };
-
-        return self;
     }
 
     pub fn deinit(self: *Self, gpa: Allocator) void {
