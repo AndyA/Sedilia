@@ -1,7 +1,9 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const expectEqual = std.testing.expectEqual;
-const pack = @import("./packed.zig");
+const expectEqualDeep = std.testing.expectEqualDeep;
+const Stringify = std.json.Stringify;
+
 const shadow = @import("./shadow.zig");
 const IbexClass = shadow.IbexClass;
 
@@ -9,25 +11,53 @@ test {
     std.testing.refAllDecls(@This());
 }
 
+pub fn Slice(comptime T: type, comptime bits: usize) type {
+    return packed struct {
+        const Self = @This();
+        pub const Type = []const T;
+
+        len: @Int(.unsigned, bits - @bitSizeOf([*]const T)),
+        ptr: [*]const T,
+
+        pub fn init(value: Type) Self {
+            return Self{ .len = @intCast(value.len), .ptr = value.ptr };
+        }
+
+        pub fn get(self: Self) Type {
+            return self.ptr[0..self.len];
+        }
+    };
+}
+
+test Slice {
+    try expectEqual(120, @bitSizeOf(Slice(u8, 120)));
+    const is = Slice(u8, 120).init("Hello");
+    try expectEqual("Hello", is.get());
+}
+
+pub fn Padded(comptime T: type, comptime bits: usize) type {
+    return packed struct {
+        const Self = @This();
+        pub const Type = T;
+
+        pad: @Int(.unsigned, bits - @bitSizeOf(T)) = 0,
+        v: T,
+
+        pub fn init(value: Type) Self {
+            return Self{ .v = value };
+        }
+
+        pub fn get(self: Self) Type {
+            return self.v;
+        }
+    };
+}
+
 const IbexValue = packed struct {
     const Self = @This();
 
     const TagType = u8;
     const budget = 128 - @bitSizeOf(TagType);
-
-    const Payload = packed union {
-        null: pack.Padded(void, budget),
-        bool: pack.Padded(bool, budget),
-        integer: pack.Padded(i64, budget),
-        float: pack.Padded(f64, budget),
-        array: pack.Slice(IbexValue, budget),
-        // An object is like an array but its first element must be a `class`
-        object: pack.Slice(IbexValue, budget),
-        string: pack.Slice(u8, budget),
-        class: pack.Padded(*const IbexClass, budget),
-        json: pack.Slice(u8, budget), // literal JSON
-        ibex: pack.Slice(u8, budget), // Ibex/Oryx bytes
-    };
 
     pub const Tag = enum(TagType) {
         null,
@@ -40,6 +70,20 @@ const IbexValue = packed struct {
         class,
         json,
         ibex,
+    };
+
+    pub const Payload = packed union {
+        null: Padded(void, budget),
+        bool: Padded(bool, budget),
+        integer: Padded(i64, budget),
+        float: Padded(f64, budget),
+        array: Slice(IbexValue, budget),
+        // An object is like an array but its first element must be a `class`
+        object: Slice(IbexValue, budget),
+        string: Slice(u8, budget),
+        class: Padded(*const IbexClass, budget),
+        json: Slice(u8, budget), // literal JSON
+        ibex: Slice(u8, budget), // Ibex/Oryx bytes
     };
 
     tag: Tag,
@@ -59,11 +103,42 @@ const IbexValue = packed struct {
         assert(tag == self.tag);
         return @field(self.p, @tagName(tag)).get();
     }
+
+    pub fn getObject(self: Self) struct { *const IbexClass, []const Self } {
+        const contents = self.get(.object);
+        assert(contents.len > 0);
+        const class = contents[0].get(.class);
+        const elts = contents[1..contents.len];
+        assert(class.keys.len == elts.len);
+        return .{ class, elts };
+    }
+
+    pub fn stringify(self: Self, sfy: *Stringify) !void {
+        switch (self.tag) {
+            .null => try sfy.write(null),
+            inline .bool, .integer, .float, .string => |t| try sfy.write(self.get(t)),
+            .array => {
+                try sfy.beginArray();
+                for (self.get(.array)) |elt| {
+                    try elt.stringify(sfy);
+                }
+                try sfy.endArray();
+            },
+            .object => {
+                const class, const elts = self.getObject();
+                try sfy.beginObject();
+                for (elts, class.keys) |e, n| {
+                    try sfy.objectField(n);
+                    try e.stringify(sfy);
+                }
+                try sfy.endObject();
+            },
+            else => unreachable,
+        }
+    }
 };
 
 test IbexValue {
-    try expectEqual(128, @bitSizeOf(IbexValue));
-
     const ivNull = IbexValue.init(.null, {});
     try expectEqual(.null, ivNull.tag);
 
@@ -74,4 +149,74 @@ test IbexValue {
     const ivStr = IbexValue.init(.string, "Hello!");
     try expectEqual(.string, ivStr.tag);
     try expectEqual("Hello!", ivStr.get(.string));
+}
+
+test "stringify" {
+    const gpa = std.testing.allocator;
+
+    const IV = IbexValue;
+    const iv = IV.init;
+
+    const TestCase = struct {
+        const Self = @This();
+        iv: IV,
+        expect: []const u8,
+
+        pub fn init(comptime tag: IV.Tag, value: IV.tagType(tag), expect: []const u8) Self {
+            return Self{ .iv = iv(tag, value), .expect = expect };
+        }
+    };
+
+    const t = TestCase.init;
+
+    // Build shadow classes
+    var root = shadow.IbexShadow{};
+    defer root.deinit(gpa);
+
+    const x = try root.getClassForKeys(gpa, &.{"x"});
+    const xy = try root.getClassForKeys(gpa, &.{ "x", "y" });
+
+    const cases = [_]TestCase{
+        t(.null, {}, "null"),
+        t(.integer, 1234, "1234"),
+        t(.float, 1234.5, "1234.5"),
+        t(.bool, true, "true"),
+        t(.string, "Hello!", "\"Hello!\""),
+        t(.array, &[_]IV{}, "[]"),
+        t(.array, &[_]IV{iv(.integer, 123)}, "[123]"),
+        t(.array, &[_]IV{ iv(.integer, 123), iv(.integer, 456) }, "[123,456]"),
+        t(.object, &[_]IV{ iv(.class, x), iv(.integer, 123) }, "{\"x\":123}"),
+        t(
+            .object,
+            &[_]IV{ iv(.class, xy), iv(.integer, 123), iv(.integer, 456) },
+            "{\"x\":123,\"y\":456}",
+        ),
+    };
+
+    for (cases) |tc| {
+        var buf: std.ArrayListUnmanaged(u8) = .empty;
+        var w = std.Io.Writer.Allocating.fromArrayList(gpa, &buf);
+        defer w.deinit();
+
+        var sfy = Stringify{ .writer = &w.writer };
+        try tc.iv.stringify(&sfy);
+
+        var output = w.toArrayList();
+        defer output.deinit(gpa);
+
+        try expectEqualDeep(tc.expect, output.items);
+    }
+}
+
+test "layout" {
+    try expectEqual(128, @bitSizeOf(IbexValue));
+    comptime {
+        const pi = @typeInfo(IbexValue.Payload).@"union";
+        const ti = @typeInfo(IbexValue.Tag).@"enum";
+        try expectEqual(pi.fields.len, ti.fields.len);
+        for (pi.fields, ti.fields, 0..) |p, t, i| {
+            try expectEqual(p.name, t.name);
+            try expectEqual(t.value, i);
+        }
+    }
 }

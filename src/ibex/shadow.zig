@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
-const IndexType = u32;
+const IndexType = usize;
 const IndexMap = std.StringHashMapUnmanaged(IndexType);
 
 fn indexMapForNames(gpa: Allocator, names: []const []const u8) !IndexMap {
@@ -19,23 +19,23 @@ pub const IbexClass = struct {
     const Self = @This();
 
     index_map: IndexMap = .empty,
-    names: []const []const u8,
+    keys: []const []const u8,
 
     pub fn initFromShadow(gpa: Allocator, shadow: *const IbexShadow) !Self {
         const size = shadow.size();
 
-        var names = try gpa.alloc([]const u8, size);
-        errdefer gpa.free(names);
+        var keys = try gpa.alloc([]const u8, size);
+        errdefer gpa.free(keys);
 
         var class = shadow;
         while (class.size() > 0) : (class = class.parent.?) {
             assert(class.index < size);
-            names[class.index] = class.name;
+            keys[class.index] = class.key;
         }
 
         const self = Self{
-            .index_map = try indexMapForNames(gpa, names),
-            .names = names,
+            .index_map = try indexMapForNames(gpa, keys),
+            .keys = keys,
         };
 
         return self;
@@ -43,7 +43,7 @@ pub const IbexClass = struct {
 
     pub fn deinit(self: *Self, gpa: Allocator) void {
         self.index_map.deinit(gpa);
-        gpa.free(self.names);
+        gpa.free(self.keys);
         self.* = undefined;
     }
 
@@ -60,7 +60,7 @@ pub const IbexShadow = struct {
 
     parent: ?*const Self = null,
     object_class: ?IbexClass = null,
-    name: []const u8 = "$", // not normally referred to
+    key: []const u8 = "$", // not normally referred to
     next: NextMap = .empty,
     index: IndexType = RootIndex,
     usage: usize = 0,
@@ -78,7 +78,7 @@ pub const IbexShadow = struct {
 
     fn deinitNonRoot(self: *Self, gpa: Allocator) void {
         self.deinitContents(gpa);
-        gpa.free(self.name);
+        gpa.free(self.key);
         gpa.destroy(self);
     }
 
@@ -93,14 +93,14 @@ pub const IbexShadow = struct {
         return self;
     }
 
-    pub fn getNext(self: *Self, gpa: Allocator, name: []const u8) !*Self {
-        const slot = try self.next.getOrPutContextAdapted(gpa, name, ctx, ctx);
+    pub fn getNext(self: *Self, gpa: Allocator, key: []const u8) !*Self {
+        const slot = try self.next.getOrPutContextAdapted(gpa, key, ctx, ctx);
         if (!slot.found_existing) {
-            const key_name = try gpa.dupe(u8, name);
+            const key_name = try gpa.dupe(u8, key);
             const next = try gpa.create(Self);
             next.* = .{
                 .parent = self,
-                .name = key_name,
+                .key = key_name,
                 .index = self.size(),
             };
             slot.key_ptr.* = key_name;
@@ -109,11 +109,24 @@ pub const IbexShadow = struct {
         return slot.value_ptr.*.startWalk();
     }
 
+    pub fn getForKeys(self: *Self, gpa: Allocator, keys: []const []const u8) !*Self {
+        var class = self.startWalk();
+        for (keys) |key| {
+            class = try class.getNext(gpa, key);
+        }
+        return class;
+    }
+
     pub fn getClass(self: *Self, gpa: Allocator) !*const IbexClass {
         if (self.object_class == null)
             self.object_class = try IbexClass.initFromShadow(gpa, self);
 
         return &self.object_class.?;
+    }
+
+    pub fn getClassForKeys(self: *Self, gpa: Allocator, keys: []const []const u8) !*const IbexClass {
+        const class = try self.getForKeys(gpa, keys);
+        return try class.getClass(gpa);
     }
 };
 
@@ -123,7 +136,7 @@ test IbexShadow {
     var root = SC{};
     defer root.deinit(gpa);
 
-    try std.testing.expectEqual(root.name, "$");
+    try std.testing.expectEqual(root.key, "$");
 
     var foo1 = try root.getNext(gpa, "foo");
     try std.testing.expectEqual(foo1.index, 0);
@@ -144,5 +157,5 @@ test IbexShadow {
     try std.testing.expectEqual(cls1, cls2);
 
     const empty = try root.getClass(gpa);
-    try std.testing.expectEqualDeep(0, empty.names.len);
+    try std.testing.expectEqualDeep(0, empty.keys.len);
 }
