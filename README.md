@@ -12,6 +12,7 @@ Oryx: fast encoding for object
 
 ## Thinks
 
+- WHY NOT JUST STORE JSON? (sorry for shouts)
 - Ibex/Oryx native support for JS, Python (obv zig)
 
 ## Ibex
