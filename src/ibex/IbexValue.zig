@@ -1,8 +1,13 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const expectEqual = std.testing.expectEqual;
+const pack = @import("./packed.zig");
+const shadow = @import("./shadow.zig");
+const IbexClass = shadow.IbexClass;
 
-pub const IbexClass = struct {}; // TODO
+test {
+    std.testing.refAllDecls(@This());
+}
 
 pub const IbexValueTag = enum(u8) {
     null,
@@ -17,63 +22,23 @@ pub const IbexValueTag = enum(u8) {
     ibex,
 };
 
-fn PackedSlice(comptime T: type) type {
-    return packed struct {
-        const Self = @This();
-        pub const Type = []const T;
-
-        len: u56,
-        ptr: [*]const T,
-
-        pub fn init(value: Type) Self {
-            return Self{ .len = @intCast(value.len), .ptr = value.ptr };
-        }
-
-        pub fn get(self: Self) Type {
-            return self.ptr[0..self.len];
-        }
-    };
-}
-
-test PackedSlice {
-    try expectEqual(120, @bitSizeOf(PackedSlice(u8)));
-    const is = PackedSlice(u8).init("Hello");
-    try expectEqual("Hello", is.get());
-}
-
-fn Padded(comptime T: type, comptime bits: usize) type {
-    return packed struct {
-        const Self = @This();
-        pub const Type = T;
-
-        pad: @Int(.unsigned, bits - @bitSizeOf(T)) = 0,
-        v: T,
-
-        pub fn init(value: Type) Self {
-            return Self{ .v = value };
-        }
-
-        pub fn get(self: Self) Type {
-            return self.v;
-        }
-    };
-}
-
-const Payload = packed union {
-    null: Padded(void, 120),
-    bool: Padded(bool, 120),
-    integer: Padded(i64, 120),
-    float: Padded(f64, 120),
-    array: PackedSlice(IbexValue),
-    object: PackedSlice(IbexValue), // like an array but with the class as the first element
-    string: PackedSlice(u8),
-    class: Padded(*const IbexClass, 120),
-    json: PackedSlice(u8), // literal JSON
-    ibex: PackedSlice(u8), // Ibex/Oryx bytes
-};
-
 const IbexValue = packed struct {
     const Self = @This();
+
+    const budget = 128 - @bitSizeOf(IbexValueTag);
+
+    const Payload = packed union {
+        null: pack.Padded(void, budget),
+        bool: pack.Padded(bool, budget),
+        integer: pack.Padded(i64, budget),
+        float: pack.Padded(f64, budget),
+        array: pack.PackedSlice(IbexValue, budget),
+        object: pack.PackedSlice(IbexValue, budget), // like an array but with the class as the first element
+        string: pack.PackedSlice(u8, budget),
+        class: pack.Padded(*const IbexClass, budget),
+        json: pack.PackedSlice(u8, budget), // literal JSON
+        ibex: pack.PackedSlice(u8, budget), // Ibex/Oryx bytes
+    };
 
     tag: IbexValueTag,
     p: Payload,
