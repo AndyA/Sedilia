@@ -5,12 +5,12 @@ pub const IbexClass = struct {}; // TODO
 // IbexValues need at least two associated arenas - so why not limit indexes to 32
 // bits, lengths to 24 bits - so a single tagged value fits in 64 bits? Or 8/32/32?
 
-pub const IbexValue = union(u8) {
+pub const IbexValue = union(enum) {
     const Self = @This();
 
     null,
-    boolean: bool,
-    int: i64,
+    bool: bool,
+    integer: i64,
     float: f64,
     array: []const Self,
     object: []const Self, // like an array but the first item must be a class
@@ -22,5 +22,5 @@ pub const IbexValue = union(u8) {
 };
 
 test {
-    // std.debug.print("Hello!\n", .{});
+    try std.testing.expect(@bitSizeOf(IbexValue) <= 192);
 }
