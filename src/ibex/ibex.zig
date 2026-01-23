@@ -10,52 +10,32 @@ pub const IbexTag = enum(u8) {
     False = 0x02,
     True = 0x03,
     String = 0x04,
+    CollatedString = 0x05, // <collated><0x01><literal><0x00> or <collated><0x00>
 
-    NumNegNaN = 0x05,
-    NumNegInf = 0x06,
-    NumNeg = 0x07,
-    NumNegZero = 0x08,
-    NumPosZero = 0x09,
-    NumPos = 0x0a,
-    NumPosInf = 0x0b,
-    NumPosNaN = 0x0c,
+    NumNegNaN = 0x06,
+    NumNegInf = 0x07,
+    NumNeg = 0x08, // ~NumPos
+    NumNegZero = 0x09,
+    NumPosZero = 0x0a,
+    NumPos = 0x0b, // <exp: IbexInt><mant: mantissa>
+    NumPosInf = 0x0c,
+    NumPosNaN = 0x0d,
 
-    Array = 0x0d, // (elt)* End
-    Object = 0x0e, // (k, v)* End
+    Array = 0x0e, // (elt)* End
+    Object = 0x0f, // (k, v)* End
 
-    // Behaves like Array; represents something like NDJSON - a sequence of objects.
-    Multi = 0x0f,
-
-    // Additional Oryx encodings
-    OryxInt = 0x10, // value: IbexInt
-    OryxString = 0x11, // len: IbexInt, str: []u8
-
-    OryxClass = 0x12, // parent: IbexInt, count: IbexInt, keys: []IbexValue
-    OryxArray = 0x13, // count: IbexInt, values: []IbexValue
-    OryxObject = 0x14, // class: IbexInt, count: IbexInt, values: []IbexValue
-
-    pub fn valid(tag: IbexTag) bool {
-        return @intFromEnum(tag) <= @intFromEnum(IbexTag.OryxObject);
-    }
-
-    pub fn indexSafe(tag: IbexTag) bool {
-        return @intFromEnum(tag) < @intFromEnum(IbexTag.Multi);
-    }
-
-    pub fn oryxSafe(tag: IbexTag) bool {
+    pub fn isNumber(tag: IbexTag) bool {
         return switch (tag) {
-            .Null, .False, .True => true,
             .NumNegNaN, .NumNegInf, .NumNeg, .NumNegZero => true,
             .NumPosZero, .NumPos, .NumPosInf, .NumPosNaN => true,
-            .OryxInt, .OryxString, .OryxClass, .OryxArray, .OryxObject => true,
             else => false,
         };
     }
 };
 
 test IbexTag {
-    try std.testing.expect(IbexTag.indexSafe(.Object));
-    try std.testing.expect(!IbexTag.indexSafe(.Multi));
+    try std.testing.expect(IbexTag.isNumber(.NumNegNaN));
+    try std.testing.expect(!IbexTag.isNumber(.String));
 }
 
 pub const IbexError = error{

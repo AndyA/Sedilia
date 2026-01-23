@@ -44,7 +44,7 @@ pub fn skip(r: *ByteReader) IbexError!void {
     return switch (tag) {
         .End => IbexError.InvalidData, // may not occur on its own
         .Null, .False, .True => {},
-        .String => skipPastZero(r),
+        .String, .CollatedString => skipPastZero(r),
         .NumNegNaN, .NumNegInf => {},
         .NumNeg => skipNumNeg(r),
         .NumNegZero, .NumPosZero => {},

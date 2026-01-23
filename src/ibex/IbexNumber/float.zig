@@ -10,7 +10,6 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexInt = @import("../IbexInt.zig");
 const mantissa = @import("./mantissa.zig");
-const common = @import("../common.zig");
 
 fn FloatBits(comptime T: type) type {
     return struct {
@@ -177,11 +176,7 @@ pub fn floatCodec(comptime T: type) type {
                 exp = 0;
             }
 
-            const v = VT{ .value = .{
-                .exp = @intCast(exp),
-                .mant = mant,
-                .sign = false,
-            } };
+            const v = VT{ .value = .{ .exp = @intCast(exp), .mant = mant, .sign = false } };
             return v.get();
         }
 
@@ -211,7 +206,8 @@ pub fn floatCodec(comptime T: type) type {
         }
 
         pub fn skip(r: *ByteReader) IbexError!void {
-            return common.skip(r);
+            const skipper = @import("../skipper.zig");
+            return skipper.skip(r);
         }
     };
 }

@@ -55,6 +55,13 @@ pub const ByteWriter = struct {
         self.buf[self.pos] = b ^ self.flip;
     }
 
+    pub fn append(self: *Self, bytes: []const u8) IbexError!void {
+        if (self.pos + bytes.len > self.buf.len)
+            return IbexError.BufferFull;
+        @memcpy(self.buf[self.pos .. self.pos + bytes.len], bytes);
+        self.pos += bytes.len;
+    }
+
     pub fn slice(self: *const Self) []const u8 {
         return self.buf[0..self.pos];
     }
