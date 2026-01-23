@@ -10,6 +10,13 @@ Oryx: fast encoding for object
 | IbexValue ⇢ |           ✔ | `IbexValue.stringify` |             |     𐄂 |
 | zig ⇢       |           ✔ |                     ✔ |           𐄂 |       |
 
+Or maybe just:
+
+|             | ⇢ Ibex/Oryx | ⇢ JSON |
+| ----------- | ----------: | -----: |
+| Ibex/Oryx ⇢ |             |      ✔ |
+| JSON ⇢      |           ✔ |        |
+
 ## Thinks
 
 - WHY NOT JUST STORE JSON? (sorry for shouts)

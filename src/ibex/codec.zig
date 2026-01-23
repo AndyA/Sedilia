@@ -51,6 +51,7 @@ pub const IbexWriter = struct {
             tail = tail.slice[esc + 1 .. tail.len];
         }
         try self.w.append(tail);
+        try self.writeTag(.End);
     }
 
     pub fn write(self: *Self, v: anytype) !void {
@@ -58,21 +59,19 @@ pub const IbexWriter = struct {
         switch (@typeInfo(T)) {
             .null => try self.writeTag(.Null),
             .bool => try self.writeTag(if (v) .True else .False),
-            inline .int, .float => {
-                try IbexNumber(T).write(self.w, v);
-            },
-            .comptime_float => {
-                try self.write(@as(f64, @floatCast(v)));
-            },
-            .comptime_int => {
-                try self.write(@as(std.math.IntFittingRange(v, v), v));
-            },
+            inline .int, .float => try IbexNumber(T).write(self.w, v),
+            .comptime_float => try self.write(@as(f64, @floatCast(v))),
+            .comptime_int => try self.write(@as(std.math.IntFittingRange(v, v), v)),
             .optional => {
-                if (v) |payload| {
-                    try self.write(payload);
-                } else {
+                if (v) |payload|
+                    try self.write(payload)
+                else
                     try self.write(null);
-                }
+            },
+            .array => try self.write(&v),
+            .vector => |vec| {
+                const array: [vec.len]vec.child = v;
+                try self.write(&array);
             },
             .@"struct" => |strc| {
                 if (strc.is_tuple) {
@@ -99,8 +98,8 @@ pub const IbexWriter = struct {
                     .one => {
                         switch (@typeInfo(ptr.child)) {
                             .array => {
-                                const S = []const std.meta.Elem(ptr.child);
-                                try self.write(@as(S, v));
+                                const E = []const std.meta.Elem(ptr.child);
+                                try self.write(@as(E, v));
                             },
                             else => try self.write(v.*),
                         }
@@ -119,13 +118,6 @@ pub const IbexWriter = struct {
                         }
                     },
                 }
-            },
-            .array => {
-                try self.write(&v);
-            },
-            .vector => |vec| {
-                const array: [vec.len]vec.child = v;
-                try self.write(&array);
             },
             else => @compileError("Unable to encode type '" ++ @typeName(T) ++ "'"),
         }
