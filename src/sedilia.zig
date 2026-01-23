@@ -39,8 +39,6 @@ test "scratch" {
 test {
     _ = @import("./ibex/IbexInt.zig");
     _ = @import("./ibex/IbexNumber.zig");
-    _ = @import("./ibex/IbexValue.zig");
-    _ = @import("./ibex/shadow.zig");
     _ = @import("./support/bm.zig");
     _ = @import("./support/wildcard.zig");
     _ = @import("./mule.zig");

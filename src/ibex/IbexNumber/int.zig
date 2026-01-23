@@ -98,9 +98,7 @@ pub fn intCodec(comptime T: type) type {
             return -try readIntBits(r, exp);
         }
 
-        pub fn read(r: *ByteReader) IbexError!T {
-            const nb = try r.next();
-            const tag: IbexTag = @enumFromInt(nb);
+        pub fn readTag(r: *ByteReader, tag: IbexTag) IbexError!T {
             return switch (tag) {
                 .NumPosZero, .NumNegZero => 0,
                 .NumPos => readPosInt(r),
@@ -109,6 +107,11 @@ pub fn intCodec(comptime T: type) type {
                 .NumNegNaN, .NumPosNaN => IbexError.Overflow,
                 else => IbexError.InvalidData,
             };
+        }
+
+        pub fn read(r: *ByteReader) IbexError!T {
+            const nb = try r.next();
+            return readTag(r, @enumFromInt(nb));
         }
 
         pub fn skip(r: *ByteReader) IbexError!void {

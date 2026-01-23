@@ -191,9 +191,7 @@ pub fn floatCodec(comptime T: type) type {
             return -try readNumPos(r);
         }
 
-        pub fn read(r: *ByteReader) IbexError!T {
-            const nb = try r.next();
-            const tag: IbexTag = @enumFromInt(nb);
+        pub fn readTag(r: *ByteReader, tag: IbexTag) IbexError!T {
             return switch (tag) {
                 .NumPosZero => 0.0,
                 .NumNegZero => -0.0,
@@ -205,6 +203,11 @@ pub fn floatCodec(comptime T: type) type {
                 .NumNeg => readNumNeg(r),
                 else => IbexError.InvalidData,
             };
+        }
+
+        pub fn read(r: *ByteReader) IbexError!T {
+            const nb = try r.next();
+            return readTag(r, @enumFromInt(nb));
         }
 
         pub fn skip(r: *ByteReader) IbexError!void {
