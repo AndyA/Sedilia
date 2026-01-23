@@ -147,9 +147,9 @@ test {
     try testWrite(
         .{ .name = "Andy", .checked = false, .rate = 1.5 },
         .{t(.Object)} ++
-            .{t(.String)} ++ "name" ++ .{t(.End)} ++ .{t(.String)} ++ "Andy" ++ .{t(.End)} ++
-            .{t(.String)} ++ "checked" ++ .{t(.End)} ++ .{t(.False)} ++
-            .{t(.String)} ++ "rate" ++ .{t(.End)} ++ .{ t(.NumPos), 0x80, 0x80 } ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
             .{t(.End)},
     );
 }
