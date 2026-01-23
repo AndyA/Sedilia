@@ -9,10 +9,6 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexNumber = @import("./IbexNumber.zig");
 
-test {
-    // print("Hello\n", .{});
-}
-
 pub const IbexWriter = struct {
     const Self = @This();
 
@@ -48,7 +44,7 @@ pub const IbexWriter = struct {
         while (std.mem.findAny(u8, tail, &.{ 0x00, 0x01, 0x02 })) |esc| {
             try self.w.append(tail[0..esc]);
             try self.w.append(&.{ 0x02, tail[esc] + 1 });
-            tail = tail.slice[esc + 1 .. tail.len];
+            tail = tail[esc + 1 .. tail.len];
         }
         try self.w.append(tail);
         try self.writeTag(.End);
@@ -97,6 +93,7 @@ pub const IbexWriter = struct {
                             try self.endArray();
                         }
                     },
+                    else => unreachable,
                 }
             },
             .@"struct" => |strc| {
@@ -123,3 +120,20 @@ pub const IbexWriter = struct {
         }
     }
 };
+
+fn testWrite(value: anytype, expect: []const u8) !void {
+    var buf: [256]u8 = undefined;
+    var bw = ByteWriter{ .buf = &buf };
+    var iw = IbexWriter{ .w = &bw };
+    try iw.write(value);
+    try std.testing.expectEqualDeep(expect, bw.slice());
+}
+
+fn t(tag: IbexTag) u8 {
+    return @intFromEnum(tag);
+}
+
+test {
+    try testWrite(null, &.{t(.Null)});
+    try testWrite("Hello", .{t(.String)} ++ "Hello" ++ .{t(.End)});
+}
