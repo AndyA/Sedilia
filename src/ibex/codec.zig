@@ -141,14 +141,15 @@ fn t(tag: IbexTag) u8 {
 test {
     try testWrite(null, &.{t(.Null)});
     try testWrite(0, &.{t(.NumPosZero)});
+    try testWrite(1, &.{ t(.NumPos), 0x80, 0x00 });
+    try testWrite(1.5, &.{ t(.NumPos), 0x80, 0x80 });
     try testWrite("Hello", .{t(.String)} ++ "Hello" ++ .{t(.End)});
     try testWrite(
-        .{ .name = "Andy", .checked = false },
+        .{ .name = "Andy", .checked = false, .rate = 1.5 },
         .{t(.Object)} ++
-            .{t(.String)} ++ "name" ++ .{t(.End)} ++
-            .{t(.String)} ++ "Andy" ++ .{t(.End)} ++
-            .{t(.String)} ++ "checked" ++ .{t(.End)} ++
-            .{t(.False)} ++
+            .{t(.String)} ++ "name" ++ .{t(.End)} ++ .{t(.String)} ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{t(.End)} ++ .{t(.False)} ++
+            .{t(.String)} ++ "rate" ++ .{t(.End)} ++ .{ t(.NumPos), 0x80, 0x80 } ++
             .{t(.End)},
     );
 }
