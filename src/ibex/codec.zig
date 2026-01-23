@@ -7,7 +7,8 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
-const IbexNumber = @import("./IbexNumber.zig");
+const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
+const bm = @import("../support/bm.zig");
 
 pub const IbexWriter = struct {
     const Self = @This();
@@ -55,7 +56,9 @@ pub const IbexWriter = struct {
         switch (@typeInfo(T)) {
             .null => try self.writeTag(.Null),
             .bool => try self.writeTag(if (v) .True else .False),
-            inline .int, .float => try IbexNumber(T).write(self.w, v),
+            inline .int, .float => {
+                try IbexNumber(T).write(self.w, v);
+            },
             .comptime_float => try self.write(@as(f64, @floatCast(v))),
             .comptime_int => try self.write(@as(std.math.IntFittingRange(v, v), v)),
             .optional => {
@@ -126,6 +129,8 @@ fn testWrite(value: anytype, expect: []const u8) !void {
     var bw = ByteWriter{ .buf = &buf };
     var iw = IbexWriter{ .w = &bw };
     try iw.write(value);
+    // print(">> {any}\n", .{value});
+    // bm.hexDump(bw.slice(), 0);
     try std.testing.expectEqualDeep(expect, bw.slice());
 }
 
@@ -135,5 +140,15 @@ fn t(tag: IbexTag) u8 {
 
 test {
     try testWrite(null, &.{t(.Null)});
+    try testWrite(0, &.{t(.NumPosZero)});
     try testWrite("Hello", .{t(.String)} ++ "Hello" ++ .{t(.End)});
+    try testWrite(
+        .{ .name = "Andy", .checked = false },
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{t(.End)} ++
+            .{t(.String)} ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{t(.End)} ++
+            .{t(.False)} ++
+            .{t(.End)},
+    );
 }
