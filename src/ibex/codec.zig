@@ -129,7 +129,7 @@ fn testWrite(value: anytype, expect: []const u8) !void {
     var bw = ByteWriter{ .buf = &buf };
     var iw = IbexWriter{ .w = &bw };
     try iw.write(value);
-    // print(">> {any}\n", .{value});
+    // print(">> {any} ({any})\n", .{ value, @TypeOf(value) });
     // bm.hexDump(bw.slice(), 0);
     try std.testing.expectEqualDeep(expect, bw.slice());
 }
@@ -142,7 +142,12 @@ test {
     try testWrite(null, &.{t(.Null)});
     try testWrite(0, &.{t(.NumPosZero)});
     try testWrite(1, &.{ t(.NumPos), 0x80, 0x00 });
+    try testWrite(@as(u8, 1), &.{ t(.NumPos), 0x80, 0x00 });
+    try testWrite(@as(f16, 1), &.{ t(.NumPos), 0x80, 0x00 });
     try testWrite(1.5, &.{ t(.NumPos), 0x80, 0x80 });
+    try testWrite(@as(f16, 1.5), &.{ t(.NumPos), 0x80, 0x80 });
+    try testWrite(@as(f32, 1.5), &.{ t(.NumPos), 0x80, 0x80 });
+    try testWrite(@as(f64, 1.5), &.{ t(.NumPos), 0x80, 0x80 });
     try testWrite("Hello", .{t(.String)} ++ "Hello" ++ .{t(.End)});
     try testWrite(
         .{ .name = "Andy", .checked = false, .rate = 1.5 },
