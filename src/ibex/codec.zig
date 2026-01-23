@@ -140,6 +140,8 @@ fn t(tag: IbexTag) u8 {
 
 test {
     try testWrite(null, &.{t(.Null)});
+    try testWrite(false, &.{t(.False)});
+    try testWrite(true, &.{t(.True)});
     try testWrite(0, &.{t(.NumPosZero)});
     try testWrite(1, &.{ t(.NumPos), 0x80, 0x00 });
     try testWrite(@as(u8, 1), &.{ t(.NumPos), 0x80, 0x00 });
