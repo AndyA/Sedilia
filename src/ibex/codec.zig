@@ -77,19 +77,19 @@ pub const IbexWriter = struct {
             .@"struct" => |strc| {
                 if (strc.is_tuple) {
                     try self.beginArray();
-                    inline for (strc.fields) |F| {
-                        if (F.type == void) continue;
-                        try self.write(@field(v, F.name));
+                    inline for (strc.fields) |fld| {
+                        if (fld.type == void) continue;
+                        try self.write(@field(v, fld.name));
                     }
                     try self.endArray();
                 } else {
                     try self.beginObject();
-                    inline for (strc.fields) |F| {
-                        if (F.type == void) continue;
-                        if (@typeInfo(F.type) == .optional and @field(v, F.name) == null)
+                    inline for (strc.fields) |fld| {
+                        if (fld.type == void) continue;
+                        if (@typeInfo(fld.type) == .optional and @field(v, fld.name) == null)
                             continue;
-                        try self.writeString(F.name);
-                        try self.write(@field(v, F.name));
+                        try self.writeString(fld.name);
+                        try self.write(@field(v, fld.name));
                     }
                     try self.endObject();
                 }
