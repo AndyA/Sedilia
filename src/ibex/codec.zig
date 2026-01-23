@@ -73,26 +73,6 @@ pub const IbexWriter = struct {
                 const array: [vec.len]vec.child = v;
                 try self.write(&array);
             },
-            .@"struct" => |strc| {
-                if (strc.is_tuple) {
-                    try self.beginArray();
-                    inline for (strc.fields) |fld| {
-                        if (fld.type == void) continue;
-                        try self.write(@field(v, fld.name));
-                    }
-                    try self.endArray();
-                } else {
-                    try self.beginObject();
-                    inline for (strc.fields) |fld| {
-                        if (fld.type == void) continue;
-                        if (@typeInfo(fld.type) == .optional and @field(v, fld.name) == null)
-                            continue;
-                        try self.writeString(fld.name);
-                        try self.write(@field(v, fld.name));
-                    }
-                    try self.endObject();
-                }
-            },
             .pointer => |ptr| {
                 switch (ptr.size) {
                     .one => {
@@ -117,6 +97,26 @@ pub const IbexWriter = struct {
                             try self.endArray();
                         }
                     },
+                }
+            },
+            .@"struct" => |strc| {
+                if (strc.is_tuple) {
+                    try self.beginArray();
+                    inline for (strc.fields) |fld| {
+                        if (fld.type == void) continue;
+                        try self.write(@field(v, fld.name));
+                    }
+                    try self.endArray();
+                } else {
+                    try self.beginObject();
+                    inline for (strc.fields) |fld| {
+                        if (fld.type == void) continue;
+                        if (@typeInfo(fld.type) == .optional and @field(v, fld.name) == null)
+                            continue;
+                        try self.writeString(fld.name);
+                        try self.write(@field(v, fld.name));
+                    }
+                    try self.endObject();
                 }
             },
             else => @compileError("Unable to encode type '" ++ @typeName(T) ++ "'"),
