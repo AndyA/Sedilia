@@ -38,13 +38,13 @@ pub const IbexWriter = struct {
     pub fn writeString(self: *Self, str: []const u8) !void {
         try self.writeTag(.String);
         // Any 0x00 / 0x01 / 0x02 in the string are escaped:
-        //   0x00 => 0x02, 0x01
-        //   0x01 => 0x02, 0x02
-        //   0x02 => 0x02, 0x03
+        //   0x00 => 0x02, 0x02
+        //   0x01 => 0x02, 0x03
+        //   0x02 => 0x02, 0x04
         var pos: usize = 0;
         while (std.mem.findAnyPos(u8, str, pos, &.{ 0x00, 0x01, 0x02 })) |esc| {
             try self.w.append(str[pos..esc]);
-            try self.w.append(&.{ 0x02, str[esc] + 1 });
+            try self.w.append(&.{ 0x02, str[esc] + 2 });
             pos = esc + 1;
         }
         try self.w.append(str[pos..str.len]);
