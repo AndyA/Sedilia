@@ -84,7 +84,7 @@ pub const IbexWriter = struct {
         if (T == Value)
             return self.writeValue(v);
 
-        switch (@typeInfo(T)) {
+        return switch (@typeInfo(T)) {
             .null => try self.writeTag(.Null),
             .bool => try self.writeTag(if (v) .True else .False),
             .int, .float => {
@@ -151,7 +151,7 @@ pub const IbexWriter = struct {
                 }
             },
             else => @compileError("Unable to encode type '" ++ @typeName(T) ++ "'"),
-        }
+        };
     }
 };
 
