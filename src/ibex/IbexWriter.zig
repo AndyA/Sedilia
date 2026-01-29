@@ -10,43 +10,43 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
 
-const IW = @This();
+const Self = @This();
 
 w: *ByteWriter,
 
-pub fn writeTag(self: *IW, tag: IbexTag) IbexError!void {
+pub fn writeTag(self: *Self, tag: IbexTag) IbexError!void {
     try self.w.put(@intFromEnum(tag));
 }
 
-pub fn writeBytes(self: *IW, b: []const u8) IbexError!void {
+pub fn writeBytes(self: *Self, b: []const u8) IbexError!void {
     try self.w.append(b);
 }
 
-pub fn beginArray(self: *IW) IbexError!void {
+pub fn beginArray(self: *Self) IbexError!void {
     try self.writeTag(.Array);
 }
 
-pub fn endArray(self: *IW) IbexError!void {
+pub fn endArray(self: *Self) IbexError!void {
     try self.writeTag(.End);
 }
 
-pub fn beginObject(self: *IW) IbexError!void {
+pub fn beginObject(self: *Self) IbexError!void {
     try self.writeTag(.Object);
 }
 
-pub fn endObject(self: *IW) IbexError!void {
+pub fn endObject(self: *Self) IbexError!void {
     try self.writeTag(.End);
 }
 
-pub fn beginString(self: *IW) IbexError!void {
+pub fn beginString(self: *Self) IbexError!void {
     try self.writeTag(.String);
 }
 
-pub fn endString(self: *IW) IbexError!void {
+pub fn endString(self: *Self) IbexError!void {
     try self.writeTag(.End);
 }
 
-pub fn writeEscapedBytes(self: *IW, b: []const u8) IbexError!void {
+pub fn writeEscapedBytes(self: *Self, b: []const u8) IbexError!void {
     // Any 0x00 / 0x01 / 0x02 in the string are escaped:
     //   0x00 => 0x02, 0x02
     //   0x01 => 0x02, 0x03
@@ -60,13 +60,13 @@ pub fn writeEscapedBytes(self: *IW, b: []const u8) IbexError!void {
     try self.writeBytes(b[pos..b.len]);
 }
 
-pub fn writeString(self: *IW, str: []const u8) IbexError!void {
+pub fn writeString(self: *Self, str: []const u8) IbexError!void {
     try self.beginString();
     try self.writeEscapedBytes(str);
     try self.endString();
 }
 
-pub fn writeValue(self: *IW, v: Value) IbexError!void {
+pub fn writeValue(self: *Self, v: Value) IbexError!void {
     switch (v) {
         .null => try self.write(null),
         inline .bool, .integer, .float, .string => |vv| try self.write(vv),
@@ -84,7 +84,7 @@ pub fn writeValue(self: *IW, v: Value) IbexError!void {
     }
 }
 
-pub fn write(self: *IW, v: anytype) IbexError!void {
+pub fn write(self: *Self, v: anytype) IbexError!void {
     const T = @TypeOf(v);
 
     if (T == Value)
@@ -163,7 +163,7 @@ const bm = @import("../support/bm.zig");
 fn testWrite(value: anytype, expect: []const u8) !void {
     var buf: [256]u8 = undefined;
     var bw = ByteWriter{ .buf = &buf };
-    var iw = IW{ .w = &bw };
+    var iw = Self{ .w = &bw };
     try iw.write(value);
     // print(">> {any} ({any})\n", .{ value, @TypeOf(value) });
     // bm.hexDump(bw.slice(), 0);
