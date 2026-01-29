@@ -9,6 +9,7 @@ const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
+const JSON = @import("./JSON.zig");
 
 const Self = @This();
 
@@ -85,18 +86,15 @@ pub fn writeValue(self: *Self, v: Value) IbexError!void {
 }
 
 pub fn writeJSON(self: *Self, json: []const u8) IbexError!void {
-    _ = self;
-    _ = json;
-    unreachable;
+    self.write(JSON{ .json = json });
 }
 
 pub fn write(self: *Self, v: anytype) IbexError!void {
     const T = @TypeOf(v);
 
-    // Some types are special cased
+    // Special cased types
     switch (T) {
         Value => return self.writeValue(v),
-        ibex.JSON => return self.writeJSON(v),
         else => {},
     }
 
@@ -145,6 +143,9 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
             }
         },
         .@"struct" => |strc| {
+            if (@hasDecl(T, "writeIbex"))
+                return v.writeIbex(self);
+
             if (strc.is_tuple) {
                 try self.beginArray();
                 inline for (strc.fields) |fld| {
