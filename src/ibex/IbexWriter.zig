@@ -84,11 +84,21 @@ pub fn writeValue(self: *Self, v: Value) IbexError!void {
     }
 }
 
+pub fn writeJSON(self: *Self, json: []const u8) IbexError!void {
+    _ = self;
+    _ = json;
+    unreachable;
+}
+
 pub fn write(self: *Self, v: anytype) IbexError!void {
     const T = @TypeOf(v);
 
-    if (T == Value)
-        return self.writeValue(v);
+    // Some types are special cased
+    switch (T) {
+        Value => return self.writeValue(v),
+        ibex.JSON => return self.writeJSON(v),
+        else => {},
+    }
 
     return switch (@typeInfo(T)) {
         .null => try self.writeTag(.Null),

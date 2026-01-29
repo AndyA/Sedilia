@@ -44,3 +44,8 @@ pub const IbexError = error{
     BufferFull,
     BufferEmpty,
 };
+
+// newtype that signals that a string is a JSON literal
+pub const JSON = struct {
+    json: []const u8,
+};
