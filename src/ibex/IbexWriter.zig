@@ -9,7 +9,6 @@ const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
-const bm = @import("../support/bm.zig");
 
 const IW = @This();
 
@@ -158,6 +157,8 @@ pub fn write(self: *IW, v: anytype) IbexError!void {
         else => @compileError("Unable to encode type '" ++ @typeName(T) ++ "'"),
     };
 }
+
+const bm = @import("../support/bm.zig");
 
 fn testWrite(value: anytype, expect: []const u8) !void {
     var buf: [256]u8 = undefined;
