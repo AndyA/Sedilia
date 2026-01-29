@@ -64,10 +64,10 @@ pub const IbexWriter = struct {
         switch (v) {
             .null => try self.write(null),
             inline .bool, .integer, .float, .string => |vv| try self.write(vv),
-            .array => |vv| try self.write(vv.items),
-            .object => |vv| {
+            .array => |a| try self.write(a.items),
+            .object => |o| {
                 try self.beginObject();
-                var iter = vv.iterator();
+                var iter = o.iterator();
                 while (iter.next()) |kv| {
                     try self.writeString(kv.key_ptr.*);
                     try self.writeValue(kv.value_ptr.*);
