@@ -1,5 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
+const Value = std.json.Value;
 
 const ibex = @import("./ibex.zig");
 const IbexTag = ibex.IbexTag;
@@ -15,31 +16,31 @@ pub const IbexWriter = struct {
 
     w: *ByteWriter,
 
-    pub fn writeTag(self: *Self, tag: IbexTag) !void {
+    pub fn writeTag(self: *Self, tag: IbexTag) IbexError!void {
         try self.w.put(@intFromEnum(tag));
     }
 
-    pub fn writeBytes(self: *Self, b: []const u8) !void {
+    pub fn writeBytes(self: *Self, b: []const u8) IbexError!void {
         try self.w.append(b);
     }
 
-    pub fn beginArray(self: *Self) !void {
+    pub fn beginArray(self: *Self) IbexError!void {
         try self.writeTag(.Array);
     }
 
-    pub fn endArray(self: *Self) !void {
+    pub fn endArray(self: *Self) IbexError!void {
         try self.writeTag(.End);
     }
 
-    pub fn beginObject(self: *Self) !void {
+    pub fn beginObject(self: *Self) IbexError!void {
         try self.writeTag(.Object);
     }
 
-    pub fn endObject(self: *Self) !void {
+    pub fn endObject(self: *Self) IbexError!void {
         try self.writeTag(.End);
     }
 
-    pub fn writeEscapedBytes(self: *Self, b: []const u8) !void {
+    pub fn writeEscapedBytes(self: *Self, b: []const u8) IbexError!void {
         // Any 0x00 / 0x01 / 0x02 in the string are escaped:
         //   0x00 => 0x02, 0x02
         //   0x01 => 0x02, 0x03
@@ -53,14 +54,36 @@ pub const IbexWriter = struct {
         try self.writeBytes(b[pos..b.len]);
     }
 
-    pub fn writeString(self: *Self, str: []const u8) !void {
+    pub fn writeString(self: *Self, str: []const u8) IbexError!void {
         try self.writeTag(.String);
         try self.writeEscapedBytes(str);
         try self.writeTag(.End);
     }
 
-    pub fn write(self: *Self, v: anytype) !void {
+    pub fn writeValue(self: *Self, v: Value) IbexError!void {
+        switch (v) {
+            .null => try self.write(null),
+            inline .bool, .integer, .float, .string => |vv| try self.write(vv),
+            .array => |vv| try self.write(vv.items),
+            .object => |vv| {
+                try self.beginObject();
+                var iter = vv.iterator();
+                while (iter.next()) |kv| {
+                    try self.writeString(kv.key_ptr.*);
+                    try self.writeValue(kv.value_ptr.*);
+                }
+                try self.endObject();
+            },
+            .number_string => unreachable,
+        }
+    }
+
+    pub fn write(self: *Self, v: anytype) IbexError!void {
         const T = @TypeOf(v);
+
+        if (T == Value)
+            return self.writeValue(v);
+
         switch (@typeInfo(T)) {
             .null => try self.writeTag(.Null),
             .bool => try self.writeTag(if (v) .True else .False),
@@ -146,7 +169,7 @@ fn t(tag: IbexTag) u8 {
     return @intFromEnum(tag);
 }
 
-test {
+test IbexWriter {
     try testWrite(null, &.{t(.Null)});
     try testWrite(false, &.{t(.False)});
     try testWrite(true, &.{t(.True)});
@@ -167,4 +190,8 @@ test {
             .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
             .{t(.End)},
     );
+}
+
+test "Value" {
+    try testWrite(Value{ .null = {} }, &.{t(.Null)});
 }
