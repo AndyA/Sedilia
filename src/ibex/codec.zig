@@ -194,4 +194,10 @@ test IbexWriter {
 
 test "Value" {
     try testWrite(Value{ .null = {} }, &.{t(.Null)});
+    try testWrite(Value{ .bool = false }, &.{t(.False)});
+    try testWrite(Value{ .integer = 0 }, &.{t(.NumPosZero)});
+    try testWrite(Value{ .integer = 1 }, &.{ t(.NumPos), 0x80, 0x00 });
+    try testWrite(Value{ .float = 0 }, &.{t(.NumPosZero)});
+    try testWrite(Value{ .float = 1 }, &.{ t(.NumPos), 0x80, 0x00 });
+    try testWrite(Value{ .string = "Hello" }, .{t(.String)} ++ "Hello" ++ .{t(.End)});
 }
