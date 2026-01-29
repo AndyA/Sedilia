@@ -87,9 +87,7 @@ pub const IbexWriter = struct {
         return switch (@typeInfo(T)) {
             .null => try self.writeTag(.Null),
             .bool => try self.writeTag(if (v) .True else .False),
-            .int, .float => {
-                try IbexNumber(T).write(self.w, v);
-            },
+            .int, .float => try IbexNumber(T).write(self.w, v),
             .comptime_float => try self.write(@as(f64, @floatCast(v))),
             .comptime_int => try self.write(@as(std.math.IntFittingRange(v, v), v)),
             .optional => {
