@@ -39,19 +39,23 @@ pub const IbexWriter = struct {
         try self.writeTag(.End);
     }
 
-    pub fn writeString(self: *Self, str: []const u8) !void {
-        try self.writeTag(.String);
+    pub fn writeEscapedBytes(self: *Self, b: []const u8) !void {
         // Any 0x00 / 0x01 / 0x02 in the string are escaped:
         //   0x00 => 0x02, 0x02
         //   0x01 => 0x02, 0x03
         //   0x02 => 0x02, 0x04
         var pos: usize = 0;
-        while (std.mem.findAnyPos(u8, str, pos, &.{ 0x00, 0x01, 0x02 })) |esc| {
-            try self.writeBytes(str[pos..esc]);
-            try self.writeBytes(&.{ 0x02, str[esc] + 2 });
+        while (std.mem.findAnyPos(u8, b, pos, &.{ 0x00, 0x01, 0x02 })) |esc| {
+            try self.writeBytes(b[pos..esc]);
+            try self.writeBytes(&.{ 0x02, b[esc] + 2 });
             pos = esc + 1;
         }
-        try self.writeBytes(str[pos..str.len]);
+        try self.writeBytes(b[pos..b.len]);
+    }
+
+    pub fn writeString(self: *Self, str: []const u8) !void {
+        try self.writeTag(.String);
+        try self.writeEscapedBytes(str);
         try self.writeTag(.End);
     }
 
