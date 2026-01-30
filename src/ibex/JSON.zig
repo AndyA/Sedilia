@@ -36,6 +36,7 @@ pub fn writeIbex(self: *const Self, w: *IbexWriter) !void {
     defer num_buf.deinit(gpa);
 
     var scanner: std.json.Scanner = .initCompleteInput(gpa, self.json);
+    defer scanner.deinit();
 
     doc: while (true) {
         const tok = try scanner.next();
