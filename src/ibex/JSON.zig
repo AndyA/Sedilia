@@ -52,7 +52,7 @@ const JSONWriter = struct {
                 const ii = try std.fmt.parseInt(i128, num, 10);
                 try w.write(ii);
             },
-            else => return e,
+            else => unreachable,
         }
     }
 
