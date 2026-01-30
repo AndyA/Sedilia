@@ -39,11 +39,25 @@ const JSONWriter = struct {
             const f = try std.fmt.parseFloat(f64, num);
             if (std.math.isFinite(f))
                 return w.write(f);
+
+            const ff = try std.fmt.parseFloat(f128, num);
+            if (std.math.isFinite(ff))
+                return w.write(ff);
+
             return IbexError.Overflow;
         }
 
-        const i = try std.fmt.parseInt(i64, num, 10);
-        try w.write(i);
+        if (std.fmt.parseInt(i64, num, 10)) |i| {
+            try w.write(i);
+        } else |e| {
+            switch (e) {
+                error.Overflow => {
+                    const ii = try std.fmt.parseInt(i128, num, 10);
+                    try w.write(ii);
+                },
+                else => return e,
+            }
+        }
     }
 
     pub fn write(self: *Self, json: []const u8) IbexError!void {
