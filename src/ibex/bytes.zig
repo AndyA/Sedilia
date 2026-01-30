@@ -17,7 +17,7 @@ pub const ByteReader = struct {
 
     pub fn peek(self: *Self) IbexError!u8 {
         if (self.eof())
-            return IbexError.BufferEmpty;
+            return IbexError.UnexpectedEndOfInput;
         return self.buf[self.pos] ^ self.flip;
     }
 
@@ -32,7 +32,7 @@ pub const ByteReader = struct {
 
     pub fn skip(self: *Self, bytes: usize) !void {
         if (self.pos + bytes > self.buf.len)
-            return IbexError.BufferEmpty;
+            return IbexError.UnexpectedEndOfInput;
         self.pos += bytes;
     }
 

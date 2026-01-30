@@ -72,7 +72,7 @@ fn readBytes(r: *ByteReader, byte_count: usize, comptime flip: u8) IbexError!i64
         acc = (acc << 8) + (try r.next() ^ flip);
     }
     if (acc < 0 or acc > MAX_ENCODED)
-        return IbexError.InvalidData;
+        return IbexError.SyntaxError;
     return acc;
 }
 

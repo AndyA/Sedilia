@@ -34,12 +34,12 @@ fn skipPastZero(r: *ByteReader) IbexError!void {
     if (std.mem.findScalar(u8, r.tail(), 0x00)) |pos|
         return r.skip(pos + 1);
 
-    return IbexError.InvalidData;
+    return IbexError.SyntaxError;
 }
 
 fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
-        .End => IbexError.InvalidData, // may not occur on its own
+        .End => IbexError.SyntaxError, // may not occur on its own
         .Null, .False, .True => {},
         .String => skipPastZero(r),
         .CollatedString => {
@@ -48,7 +48,7 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
             return switch (nt) {
                 .Null => {},
                 .String => skipTag(nt),
-                else => IbexError.InvalidData,
+                else => IbexError.SyntaxError,
             };
         },
         .NumNegNaN, .NumNegInf => {},
@@ -58,7 +58,7 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         .NumPosInf, .NumPosNaN => {},
         .Array => skipPastEnd(r),
         .Object => skipPastEnd(r),
-        else => IbexError.InvalidData,
+        else => IbexError.SyntaxError,
     };
 }
 

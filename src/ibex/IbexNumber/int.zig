@@ -70,7 +70,7 @@ pub fn intCodec(comptime T: type) type {
                 return IbexError.Overflow;
             const mant = try mantissa.readMantissa(UT, r);
             if (mant > math.maxInt(UT))
-                return IbexError.InvalidData;
+                return IbexError.SyntaxError;
 
             const int = if (exp == 0) 0 else mant >> @intCast(info.bits - exp);
             return @intCast(int | (@as(UT, 1) << @intCast(exp)));
@@ -104,7 +104,7 @@ pub fn intCodec(comptime T: type) type {
                 .NumNeg => readNegInt(r),
                 .NumNegInf, .NumPosInf => IbexError.Overflow,
                 .NumNegNaN, .NumPosNaN => IbexError.Overflow,
-                else => IbexError.InvalidData,
+                else => IbexError.SyntaxError,
             };
         }
 

@@ -88,7 +88,7 @@ pub fn readMantissa(comptime T: type, r: *ByteReader) IbexError!T {
         if (nb & 0x01 == 0) {
             // Detect non-canonical encoding
             if (nb == 0 and shift != init_shift)
-                return IbexError.InvalidData;
+                return IbexError.SyntaxError;
             break;
         }
     }

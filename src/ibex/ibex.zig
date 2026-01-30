@@ -39,10 +39,8 @@ test IbexTag {
 }
 
 pub const IbexError = error{
-    InvalidData,
     Overflow,
     BufferFull,
-    BufferEmpty,
     OutOfMemory,
     InvalidCharacter,
     SyntaxError,
