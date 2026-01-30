@@ -9,12 +9,6 @@ const isNumberFormattedLikeAnInteger = std.json.Scanner.isNumberFormattedLikeAnI
 
 const Self = @This();
 
-const State = enum(u8) {
-    INIT,
-    STRING,
-    NUMBER,
-};
-
 json: []const u8,
 
 fn writeNumber(w: *IbexWriter, num: []const u8) !void {
@@ -36,7 +30,7 @@ pub fn writeIbex(self: *const Self, w: *IbexWriter) !void {
     defer arena.deinit();
     const gpa = arena.allocator();
 
-    var state: State = .INIT;
+    var state: enum(u8) { INIT, STRING, NUMBER } = .INIT;
 
     var num_buf: std.ArrayList(u8) = .empty;
     defer num_buf.deinit(gpa);
