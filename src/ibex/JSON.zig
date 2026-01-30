@@ -74,16 +74,26 @@ const JSONWriter = struct {
                 .array_end => try w.endArray(),
                 .object_begin => try w.beginObject(),
                 .object_end => try w.endObject(),
-                .string => |str| {
-                    try self.moreString(str);
-                    try w.endString();
-                    self.state = .INIT;
-                },
+
                 .partial_string => |str| try self.moreString(str),
                 .partial_string_escaped_1 => |str| try self.moreString(&str),
                 .partial_string_escaped_2 => |str| try self.moreString(&str),
                 .partial_string_escaped_3 => |str| try self.moreString(&str),
                 .partial_string_escaped_4 => |str| try self.moreString(&str),
+                .string => |str| {
+                    try self.moreString(str);
+                    try w.endString();
+                    self.state = .INIT;
+                },
+
+                .partial_number => |num| {
+                    if (self.state == .INIT) {
+                        self.num_buf.items.len = 0;
+                        self.state = .NUMBER;
+                    }
+                    assert(self.state == .NUMBER);
+                    try self.num_buf.appendSlice(self.gpa, num);
+                },
                 .number => |num| {
                     switch (self.state) {
                         .INIT => try writeNumber(w, num),
@@ -95,14 +105,6 @@ const JSONWriter = struct {
                         else => unreachable,
                     }
                     assert(self.state == .INIT);
-                },
-                .partial_number => |num| {
-                    if (self.state == .INIT) {
-                        self.num_buf.items.len = 0;
-                        self.state = .NUMBER;
-                    }
-                    assert(self.state == .NUMBER);
-                    try self.num_buf.appendSlice(self.gpa, num);
                 },
                 else => unreachable,
             }
