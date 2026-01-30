@@ -23,7 +23,7 @@ const JSONWriter = struct {
         self.num_buf.deinit(self.gpa);
     }
 
-    fn moreString(self: *Self, str: []const u8) IbexError!void {
+    fn partialString(self: *Self, str: []const u8) IbexError!void {
         switch (self.state) {
             .INIT => {
                 try self.w.beginString();
@@ -77,14 +77,14 @@ const JSONWriter = struct {
                 .object_begin => try w.beginObject(),
                 .object_end => try w.endObject(),
 
-                .partial_string => |str| try self.moreString(str),
-                .partial_string_escaped_1 => |str| try self.moreString(&str),
-                .partial_string_escaped_2 => |str| try self.moreString(&str),
-                .partial_string_escaped_3 => |str| try self.moreString(&str),
-                .partial_string_escaped_4 => |str| try self.moreString(&str),
+                .partial_string => |str| try self.partialString(str),
+                .partial_string_escaped_1 => |str| try self.partialString(&str),
+                .partial_string_escaped_2 => |str| try self.partialString(&str),
+                .partial_string_escaped_3 => |str| try self.partialString(&str),
+                .partial_string_escaped_4 => |str| try self.partialString(&str),
 
                 .string => |str| {
-                    try self.moreString(str);
+                    try self.partialString(str);
                     try w.endString();
                     self.state = .INIT;
                 },
