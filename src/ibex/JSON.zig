@@ -1,5 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
+const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 const ibex = @import("./ibex.zig");
 const IbexError = ibex.IbexError;
@@ -100,6 +101,7 @@ const JSONWriter = struct {
                         self.num_buf.items.len = 0;
                         self.state = .NUMBER;
                     }
+                    assert(self.state == .NUMBER);
                     try self.num_buf.appendSlice(self.gpa, num);
                 },
                 else => unreachable,
