@@ -36,7 +36,7 @@ const JSONWriter = struct {
 
     fn writeNumber(w: *IbexWriter, num: []const u8) IbexError!void {
         if (!isNumberFormattedLikeAnInteger(num)) {
-            const f = std.fmt.parseFloat(f64, num) catch unreachable;
+            const f = try std.fmt.parseFloat(f64, num);
             if (std.math.isFinite(f))
                 return w.write(f);
             return IbexError.Overflow;
