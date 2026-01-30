@@ -80,11 +80,10 @@ const JSONWriter = struct {
                     self.state = .INIT;
                 },
                 .partial_string => |str| try self.moreString(str),
-                inline .partial_string_escaped_1,
-                .partial_string_escaped_2,
-                .partial_string_escaped_3,
-                .partial_string_escaped_4,
-                => |str| try self.moreString(&str),
+                .partial_string_escaped_1 => |str| try self.moreString(&str),
+                .partial_string_escaped_2 => |str| try self.moreString(&str),
+                .partial_string_escaped_3 => |str| try self.moreString(&str),
+                .partial_string_escaped_4 => |str| try self.moreString(&str),
                 .number => |num| {
                     switch (self.state) {
                         .INIT => try writeNumber(w, num),
