@@ -9,7 +9,7 @@ const Self = @This();
 
 json: []const u8,
 
-fn writeNumber(w: *IbexWriter, num: []const u8) !void {
+fn writeNumber(w: *IbexWriter, num: []const u8) IbexError!void {
     if (!isNumberFormattedLikeAnInteger(num)) {
         const f = std.fmt.parseFloat(f64, num) catch unreachable;
         if (std.math.isFinite(f))
@@ -21,7 +21,7 @@ fn writeNumber(w: *IbexWriter, num: []const u8) !void {
     try w.write(i);
 }
 
-pub fn writeIbex(self: *const Self, w: *IbexWriter) !void {
+pub fn writeIbex(self: *const Self, w: *IbexWriter) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const gpa = arena.allocator();
