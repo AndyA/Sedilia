@@ -14,11 +14,9 @@ json: []const u8,
 fn writeNumber(w: *IbexWriter, num: []const u8) !void {
     if (!isNumberFormattedLikeAnInteger(num)) {
         const f = std.fmt.parseFloat(f64, num) catch unreachable;
-        if (std.math.isFinite(f)) {
+        if (std.math.isFinite(f))
             return w.write(f);
-        } else {
-            return IbexError.Overflow;
-        }
+        return IbexError.Overflow;
     }
 
     const i = try std.fmt.parseInt(i64, num, 10);
