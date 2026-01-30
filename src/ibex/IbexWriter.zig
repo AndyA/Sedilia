@@ -8,6 +8,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
+const Literal = @import("./Literal.zig");
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
 const JSON = @import("./JSON.zig");
 
@@ -215,4 +216,15 @@ test "Value" {
     try testWrite(Value{ .float = 0 }, &.{t(.NumPosZero)});
     try testWrite(Value{ .float = 1 }, &.{ t(.NumPos), 0x80, 0x00 });
     try testWrite(Value{ .string = "Hello" }, .{t(.String)} ++ "Hello" ++ .{t(.End)});
+}
+
+test "writeIbex hook" {
+    try testWrite(Literal{ .ibex = &.{t(.Null)} }, &.{t(.Null)});
+    try testWrite(
+        .{ .name = "Andy", .rate = Literal{ .ibex = &.{ t(.NumPos), 0x80, 0x80 } } },
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+            .{t(.End)},
+    );
 }
