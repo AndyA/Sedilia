@@ -33,10 +33,10 @@ pub fn writeIbex(self: *const Self, w: *IbexWriter) !void {
     var state: enum { INIT, STRING, NUMBER } = .INIT;
 
     var num_buf: std.ArrayList(u8) = .empty;
-    defer num_buf.deinit(gpa);
+    // defer num_buf.deinit(gpa);
 
     var scanner: std.json.Scanner = .initCompleteInput(gpa, self.json);
-    defer scanner.deinit();
+    // defer scanner.deinit();
 
     doc: while (true) {
         const tok = try scanner.next();
