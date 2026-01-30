@@ -37,17 +37,19 @@ fn skipPastZero(r: *ByteReader) IbexError!void {
     return IbexError.InvalidData;
 }
 
-pub fn skip(r: *ByteReader) IbexError!void {
-    const nb = try r.next();
-    const tag: IbexTag = @enumFromInt(nb);
-
+fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
         .End => IbexError.InvalidData, // may not occur on its own
         .Null, .False, .True => {},
         .String => skipPastZero(r),
         .CollatedString => {
             try skipPastZero(r);
-            try skip(r);
+            const nt: IbexTag = @intFromEnum(try r.next());
+            return switch (nt) {
+                .Null => {},
+                .String => skipTag(nt),
+                else => IbexError.InvalidData,
+            };
         },
         .NumNegNaN, .NumNegInf => {},
         .NumNeg => skipNumNeg(r),
@@ -58,4 +60,8 @@ pub fn skip(r: *ByteReader) IbexError!void {
         .Object => skipPastEnd(r),
         else => IbexError.InvalidData,
     };
+}
+
+pub fn skip(r: *ByteReader) IbexError!void {
+    try skipTag(r, @enumFromInt(try r.next()));
 }
