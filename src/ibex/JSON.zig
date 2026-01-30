@@ -95,6 +95,7 @@ const JSONWriter = struct {
                         },
                         else => unreachable,
                     }
+                    assert(self.state == .INIT);
                 },
                 .partial_number => |num| {
                     if (self.state == .INIT) {
