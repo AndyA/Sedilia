@@ -21,6 +21,7 @@ Or maybe just:
 
 - WHY NOT JUST STORE JSON? (sorry for shouts)
 - Ibex/Oryx native support for JS, Python (obv zig)
+- Projections (subset of fields) as a first class thing
 
 ## Ibex
 

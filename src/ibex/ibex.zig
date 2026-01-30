@@ -10,7 +10,7 @@ pub const IbexTag = enum(u8) {
     False = 0x02,
     True = 0x03,
     String = 0x04,
-    CollatedString = 0x05, // <collated><0x01><literal><0x00> or <collated><0x00>
+    CollatedString = 0x05, // <collated><string> | <collated><null>
 
     NumNegNaN = 0x06,
     NumNegInf = 0x07,
