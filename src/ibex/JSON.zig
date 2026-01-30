@@ -18,7 +18,7 @@ const JSONWriter = struct {
     state: enum { INIT, STRING, NUMBER } = .INIT,
     num_buf: std.ArrayList(u8) = .empty,
 
-    fn appendString(self: *Self, str: []const u8) IbexError!void {
+    fn moreString(self: *Self, str: []const u8) IbexError!void {
         switch (self.state) {
             .INIT => {
                 try self.w.beginString();
@@ -59,16 +59,16 @@ const JSONWriter = struct {
                 .object_begin => try w.beginObject(),
                 .object_end => try w.endObject(),
                 .string => |str| {
-                    try self.appendString(str);
+                    try self.moreString(str);
                     try w.endString();
                     self.state = .INIT;
                 },
-                .partial_string => |str| try self.appendString(str),
+                .partial_string => |str| try self.moreString(str),
                 inline .partial_string_escaped_1,
                 .partial_string_escaped_2,
                 .partial_string_escaped_3,
                 .partial_string_escaped_4,
-                => |str| try self.appendString(&str),
+                => |str| try self.moreString(&str),
                 .number => |num| {
                     switch (self.state) {
                         .INIT => try writeNumber(w, num),
