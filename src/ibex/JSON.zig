@@ -18,6 +18,10 @@ const JSONWriter = struct {
     state: enum { INIT, STRING, NUMBER } = .INIT,
     num_buf: std.ArrayList(u8) = .empty,
 
+    pub fn deinit(self: *Self) void {
+        self.num_buf.deinit(self.gpa);
+    }
+
     fn moreString(self: *Self, str: []const u8) IbexError!void {
         switch (self.state) {
             .INIT => {
@@ -44,6 +48,7 @@ const JSONWriter = struct {
 
     pub fn write(self: *Self, json: []const u8) IbexError!void {
         var scanner: std.json.Scanner = .initCompleteInput(self.gpa, json);
+        defer scanner.deinit();
         var w = self.w;
 
         doc: while (true) {
