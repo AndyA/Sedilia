@@ -242,8 +242,8 @@ test "writeIbex JSON" {
     );
     try testWrite(
         JSON{ .json =
-        \\"\u0000\u0001A"
+        \\"\u0000\u0001\u0002A"
     },
-        &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x41, t(.End) },
+        &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x02, 0x41, t(.End) },
     );
 }
