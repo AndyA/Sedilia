@@ -48,14 +48,13 @@ pub fn endString(self: *Self) IbexError!void {
 }
 
 pub fn writeEscapedBytes(self: *Self, b: []const u8) IbexError!void {
-    // Any 0x00 / 0x01 / 0x02 in the string are escaped:
-    //   0x00 => 0x02, 0x02
-    //   0x01 => 0x02, 0x03
-    //   0x02 => 0x02, 0x04
+    // Any 0x00 / 0x01 in the string are escaped:
+    //   0x00 => 0x01, 0x01
+    //   0x01 => 0x01, 0x02
     var pos: usize = 0;
-    while (std.mem.findAnyPos(u8, b, pos, &.{ 0x00, 0x01, 0x02 })) |esc| {
+    while (std.mem.findAnyPos(u8, b, pos, &.{ 0x00, 0x01 })) |esc| {
         try self.writeBytes(b[pos..esc]);
-        try self.writeBytes(&.{ 0x02, b[esc] + 2 });
+        try self.writeBytes(&.{ 0x01, b[esc] + 1 });
         pos = esc + 1;
     }
     try self.writeBytes(b[pos..b.len]);
