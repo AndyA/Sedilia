@@ -30,7 +30,7 @@ pub fn writeIbex(self: *const Self, w: *IbexWriter) !void {
     defer arena.deinit();
     const gpa = arena.allocator();
 
-    var state: enum(u8) { INIT, STRING, NUMBER } = .INIT;
+    var state: enum { INIT, STRING, NUMBER } = .INIT;
 
     var num_buf: std.ArrayList(u8) = .empty;
     defer num_buf.deinit(gpa);
