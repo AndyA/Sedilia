@@ -86,7 +86,7 @@ pub fn writeValue(self: *Self, v: Value) IbexError!void {
 }
 
 pub fn writeJSON(self: *Self, json: []const u8) IbexError!void {
-    self.write(JSON{ .json = json });
+    try self.write(JSON{ .json = json });
 }
 
 pub fn write(self: *Self, v: anytype) IbexError!void {
