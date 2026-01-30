@@ -67,9 +67,11 @@ const JSONWriter = struct {
             // print("{any}\n", .{tok});
             switch (tok) {
                 .end_of_document => break :doc,
+
                 .null => try w.write(null),
                 .false => try w.write(false),
                 .true => try w.write(true),
+
                 .array_begin => try w.beginArray(),
                 .array_end => try w.endArray(),
                 .object_begin => try w.beginObject(),
@@ -80,6 +82,7 @@ const JSONWriter = struct {
                 .partial_string_escaped_2 => |str| try self.moreString(&str),
                 .partial_string_escaped_3 => |str| try self.moreString(&str),
                 .partial_string_escaped_4 => |str| try self.moreString(&str),
+
                 .string => |str| {
                     try self.moreString(str);
                     try w.endString();
@@ -94,6 +97,7 @@ const JSONWriter = struct {
                     assert(self.state == .NUMBER);
                     try self.num_buf.appendSlice(self.gpa, num);
                 },
+
                 .number => |num| {
                     switch (self.state) {
                         .INIT => try writeNumber(w, num),
@@ -106,6 +110,7 @@ const JSONWriter = struct {
                     }
                     assert(self.state == .INIT);
                 },
+
                 else => unreachable,
             }
         }
