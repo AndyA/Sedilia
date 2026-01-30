@@ -2,8 +2,6 @@ const std = @import("std");
 const print = std.debug.print;
 const ibex = @import("./ibex.zig");
 const IbexError = ibex.IbexError;
-const bytes = @import("./bytes.zig");
-const ByteWriter = bytes.ByteWriter;
 const IbexWriter = @import("./IbexWriter.zig");
 const isNumberFormattedLikeAnInteger = std.json.Scanner.isNumberFormattedLikeAnInteger;
 
