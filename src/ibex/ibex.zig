@@ -43,4 +43,9 @@ pub const IbexError = error{
     Overflow,
     BufferFull,
     BufferEmpty,
+    OutOfMemory,
+    InvalidCharacter,
+    SyntaxError,
+    UnexpectedEndOfInput,
+    BufferUnderrun,
 };

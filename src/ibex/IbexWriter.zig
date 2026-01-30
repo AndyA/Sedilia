@@ -228,3 +228,22 @@ test "writeIbex hook" {
             .{t(.End)},
     );
 }
+
+test "writeIbex JSON" {
+    try testWrite(
+        JSON{ .json =
+        \\{ "name": "Andy", "checked": false, "rate": 1.5}
+    },
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+            .{t(.End)},
+    );
+    try testWrite(
+        JSON{ .json =
+        \\"\u0000\u0001A"
+    },
+        &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x41, t(.End) },
+    );
+}
