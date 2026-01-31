@@ -69,9 +69,6 @@ pub fn intCodec(comptime T: type) type {
             if (exp >= max_exp)
                 return IbexError.Overflow;
             const mant = try mantissa.readMantissa(UT, r);
-            if (mant > math.maxInt(UT))
-                return IbexError.SyntaxError;
-
             const int = if (exp == 0) 0 else mant >> @intCast(info.bits - exp);
             return @intCast(int | (@as(UT, 1) << @intCast(exp)));
         }
