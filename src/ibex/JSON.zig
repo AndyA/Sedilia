@@ -100,7 +100,7 @@ const JSONWriter = struct {
 
                 .number => |num| {
                     switch (self.state) {
-                        .INIT => try writeNumber(w, num),
+                        .INIT => try writeNumber(w, num), // no need to buffer
                         .NUMBER => {
                             try self.num_buf.appendSlice(self.gpa, num);
                             try writeNumber(w, self.num_buf.items);
