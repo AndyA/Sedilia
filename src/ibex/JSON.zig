@@ -16,7 +16,7 @@ const JSONWriter = struct {
 
     gpa: Allocator,
     w: *IbexWriter,
-    state: enum { INIT, STRING, NUMBER } = .INIT,
+    state: enum { INIT, STRING, NUMBER } = undefined,
     num_buf: std.ArrayList(u8) = .empty,
 
     pub fn deinit(self: *Self) void {
@@ -61,6 +61,8 @@ const JSONWriter = struct {
         var scanner: std.json.Scanner = .initCompleteInput(self.gpa, json);
         defer scanner.deinit();
         var w = self.w;
+
+        self.state = .INIT;
 
         doc: while (true) {
             const tok = try scanner.next();
