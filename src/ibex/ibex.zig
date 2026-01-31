@@ -44,7 +44,7 @@ pub const IbexTagMax = blk: {
     break :blk (1 << tinfo.bits) - @clz(seen);
 };
 
-pub fn validIbexTag(byte: u8) bool {
+fn validIbexTag(byte: u8) bool {
     return byte < IbexTagMax;
 }
 
