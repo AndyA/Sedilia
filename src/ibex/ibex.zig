@@ -38,7 +38,6 @@ pub const IbexTagMax = blk: {
     const tinfo = @typeInfo(info.tag_type).int;
     var seen: @Int(.unsigned, 1 << tinfo.bits) = 0;
     for (info.fields) |f| {
-        assert((seen & (1 << f.value)) == 0);
         seen |= 1 << f.value;
     }
     assert((seen +% 1 & seen) == 0); // contiguous
