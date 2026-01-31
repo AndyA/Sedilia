@@ -35,13 +35,11 @@ pub const IbexTag = enum(u8) {
 
 pub const IbexTagMax = blk: {
     const info = @typeInfo(IbexTag).@"enum";
-    const tinfo = @typeInfo(info.tag_type).int;
-    var seen: @Int(.unsigned, 1 << tinfo.bits) = 0;
-    for (info.fields) |f| {
-        seen |= 1 << f.value;
-    }
+    assert(info.tag_type == u8);
+    var seen: u256 = 0;
+    for (info.fields) |f| seen |= 1 << f.value;
     assert((seen +% 1 & seen) == 0); // contiguous
-    break :blk (1 << tinfo.bits) - @clz(seen);
+    break :blk 256 - @clz(seen);
 };
 
 fn validIbexTag(byte: u8) bool {
