@@ -50,17 +50,17 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    const exe_tests = b.addTest(.{
-        .root_module = sedilia_exe.root_module,
+    const mule_exe = benchmark(b, "mule", target, optimize);
+    const mule_tests = b.addTest(.{
+        .root_module = mule_exe.root_module,
     });
 
-    const run_exe_tests = b.addRunArtifact(exe_tests);
+    const run_mule_tests = b.addRunArtifact(mule_tests);
     const test_step = b.step("test", "Run tests");
 
-    test_step.dependOn(&run_exe_tests.step);
+    test_step.dependOn(&run_mule_tests.step);
 
     // Benchmarks
-    _ = benchmark(b, "mule", target, optimize);
     _ = benchmark(b, "bm-codec", target, optimize);
     const bm_rocks_exe = benchmark(b, "bm-rocks", target, optimize);
     bm_rocks_exe.root_module.addImport("rocksdb", rdb_bindings);
