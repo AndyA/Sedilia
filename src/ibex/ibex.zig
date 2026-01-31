@@ -41,6 +41,7 @@ pub const IbexTagMax = blk: {
         assert((seen & (1 << f.value)) == 0);
         seen |= 1 << f.value;
     }
+    assert((seen +% 1 & seen) == 0); // contiguous
     break :blk (1 << tinfo.bits) - @clz(seen);
 };
 
