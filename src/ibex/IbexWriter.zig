@@ -12,6 +12,10 @@ const Literal = @import("./Literal.zig");
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
 const JSON = @import("./JSON.zig");
 
+test {
+    std.testing.refAllDecls(@This());
+}
+
 const Self = @This();
 
 w: *ByteWriter,
@@ -179,6 +183,12 @@ fn testWrite(value: anytype, expect: []const u8) !void {
     // print(">> {any} ({any})\n", .{ value, @TypeOf(value) });
     // bm.hexDump(bw.slice(), 0);
     try std.testing.expectEqualDeep(expect, bw.slice());
+
+    // Make sure we can skip it correctly
+    const skip = @import("./skipper.zig").skip;
+    var br = ByteReader{ .buf = bw.slice() };
+    try skip(&br);
+    try std.testing.expectEqual(expect.len, br.pos);
 }
 
 fn t(tag: IbexTag) u8 {

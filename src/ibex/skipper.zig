@@ -16,7 +16,7 @@ fn skipNumPos(r: *ByteReader) IbexError!void {
 fn skipNumNeg(r: *ByteReader) IbexError!void {
     r.negate();
     defer r.negate();
-    return -try skipNumPos(r);
+    return try skipNumPos(r);
 }
 
 fn skipPastEnd(r: *ByteReader) IbexError!void {
@@ -27,7 +27,7 @@ fn skipPastEnd(r: *ByteReader) IbexError!void {
         try skip(r);
     }
 
-    try r.next(); // swallow .End
+    _ = try r.next(); // swallow .End
 }
 
 fn skipPastZero(r: *ByteReader) IbexError!void {
@@ -44,10 +44,10 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         .String => skipPastZero(r),
         .CollatedString => {
             try skipPastZero(r);
-            const nt: IbexTag = @intFromEnum(try r.next());
+            const nt = try ibex.tagFromByte(try r.next());
             return switch (nt) {
                 .Null => {},
-                .String => skipTag(nt),
+                .String => skipTag(r, nt),
                 else => IbexError.SyntaxError,
             };
         },
@@ -58,10 +58,9 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         .NumPosInf, .NumPosNaN => {},
         .Array => skipPastEnd(r),
         .Object => skipPastEnd(r),
-        else => IbexError.SyntaxError,
     };
 }
 
 pub fn skip(r: *ByteReader) IbexError!void {
-    try skipTag(r, @enumFromInt(try r.next()));
+    try skipTag(r, try ibex.tagFromByte(try r.next()));
 }
