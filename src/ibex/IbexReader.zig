@@ -173,7 +173,6 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 
             const fields = strc.fields;
             const SetType = @Int(.unsigned, fields.len);
-            // const SetFull = std.math.maxInt(SetType);
 
             const prox = comptime struct {
                 // TODO: why not build the index using Ibex escaped strings?

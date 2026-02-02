@@ -4,6 +4,7 @@ const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 const ibex = @import("./ibex.zig");
 const IbexError = ibex.IbexError;
+const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
 const isNumberFormattedLikeAnInteger = std.json.Scanner.isNumberFormattedLikeAnInteger;
 
@@ -121,4 +122,8 @@ pub fn writeIbex(self: *const JSON, w: *IbexWriter) IbexError!void {
     defer arena.deinit();
     var writer = JSONWriter{ .gpa = arena.allocator(), .w = w };
     try writer.write(self.json);
+}
+
+pub fn readIbex(r: IbexReader) IbexError!JSON {
+    _ = r;
 }
