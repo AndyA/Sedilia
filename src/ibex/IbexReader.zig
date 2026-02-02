@@ -173,7 +173,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 
             const fields = strc.fields;
             const SetType = @Int(.unsigned, fields.len);
-            const SetFull = std.math.maxInt(SetType);
+            // const SetFull = std.math.maxInt(SetType);
 
             const prox = comptime struct {
                 // TODO: why not build the index using Ibex escaped strings?
@@ -263,11 +263,11 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 }
             }
 
-            if (seen != SetFull) {
-                inline for (0..fields.len) |i| {
-                    if (seen & (@as(SetType, 1) << i) == 0)
-                        try prox.default(&obj, i);
-                }
+            var missing = ~seen;
+            while (missing != 0) {
+                const next = @ctz(missing);
+                try prox.default(&obj, next);
+                missing = missing & (missing - 1);
             }
 
             return obj;
