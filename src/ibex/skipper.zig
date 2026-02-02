@@ -44,12 +44,7 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         .String => skipPastZero(r),
         .Collation => {
             try skipPastZero(r);
-            const nt = try ibex.tagFromByte(try r.next());
-            return switch (nt) {
-                .Null => {},
-                .String => skipTag(r, nt),
-                else => IbexError.SyntaxError,
-            };
+            return skip(r);
         },
         .NumNegNaN, .NumNegInf => {},
         .NumNeg => skipNumNeg(r),
