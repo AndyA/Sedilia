@@ -177,7 +177,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             const SetType = @Int(.unsigned, fields.len);
             const SetFull = std.math.maxInt(SetType);
 
-            const wrapper = comptime struct {
+            const prox = comptime struct {
                 // TODO: why not build the index using Ibex escaped strings?
                 // Then we never have to handle escaped keys explicitly
                 const ix: std.StaticStringMap(usize) = blk: {
@@ -244,7 +244,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
                     seen |= @as(SetType, 1) << @intCast(idx);
-                    try wrapper.set(self, &obj, idx);
+                    try prox.set(self, &obj, idx);
                     idx += 1;
                 }
             } else {
@@ -256,9 +256,9 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     if (ntag != .String)
                         return IbexError.TypeMismatch;
 
-                    if (try wrapper.lookup(self)) |idx| {
+                    if (try prox.lookup(self)) |idx| {
                         seen |= @as(SetType, 1) << @intCast(idx);
-                        try wrapper.set(self, &obj, idx);
+                        try prox.set(self, &obj, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     }
@@ -268,7 +268,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (seen != SetFull) {
                 inline for (0..fields.len) |i| {
                     if (seen & (@as(SetType, 1) << i) == 0)
-                        try wrapper.setDefault(&obj, i);
+                        try prox.setDefault(&obj, i);
                 }
             }
 
