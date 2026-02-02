@@ -26,10 +26,9 @@ r: *ByteReader,
 gpa: Allocator,
 opt: Options = .{},
 
-pub const StringToken = union(enum) {
-    complete: []const u8,
-    partial: []const u8,
-    terminal: []const u8,
+pub const StringToken = struct {
+    frag: []const u8,
+    terminal: bool = false,
 };
 
 pub const StringTokeniser = struct {
@@ -37,27 +36,19 @@ pub const StringTokeniser = struct {
     r: *ByteReader,
     state: enum { INIT, ESCAPE, INSIDE } = .INIT,
 
-    pub fn init(r: *ByteReader) ST {
-        return ST{ .r = r };
-    }
-
     pub fn next(self: *ST) IbexError!StringToken {
         const tail = self.r.tail();
         switch (self.state) {
-            .INIT, .INSIDE => |s| {
+            .INIT, .INSIDE => {
                 if (std.mem.findAny(u8, tail, &.{ 0x00, 0x01 })) |esc| {
                     try self.r.skip(esc + 1);
                     switch (tail[esc]) {
                         0x00 => {
-                            return switch (s) {
-                                .INIT => .{ .complete = tail[0..esc] },
-                                .INSIDE => .{ .terminal = tail[0..esc] },
-                                else => unreachable,
-                            };
+                            return .{ .frag = tail[0..esc], .terminal = true };
                         },
                         0x01 => {
                             self.state = .ESCAPE;
-                            return .{ .partial = tail[0..esc] };
+                            return .{ .frag = tail[0..esc] };
                         },
                         else => unreachable,
                     }
@@ -69,8 +60,8 @@ pub const StringTokeniser = struct {
                 try self.r.skip(1);
                 self.state = .INSIDE;
                 return switch (tail[0]) {
-                    0x01 => .{ .partial = "\x00" },
-                    0x02 => .{ .partial = "\x01" },
+                    0x01 => .{ .frag = "\x00" },
+                    0x02 => .{ .frag = "\x01" },
                     else => IbexError.SyntaxError,
                 };
             },
@@ -151,15 +142,11 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         .String => {
                             if (CT != u8)
                                 return IbexError.TypeMismatch;
-                            var st: StringTokeniser = .init(self.r);
+                            var st: StringTokeniser = .{ .r = self.r };
                             while (true) {
                                 const stok = try st.next();
-                                switch (stok) {
-                                    .complete, .partial, .terminal => |frag| {
-                                        try ar.appendSlice(self.gpa, frag);
-                                    },
-                                }
-                                if (stok != .partial) break;
+                                try ar.appendSlice(self.gpa, stok.frag);
+                                if (stok.terminal) break;
                             }
                         },
                         .Array => {
@@ -201,15 +188,15 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 break :blk .{ opt, def };
             };
 
-            const index: std.StaticStringMap(usize) = comptime blk: {
-                const KV = struct { []const u8, usize };
-                var kvs: [strc.fields.len]KV = undefined;
-                for (strc.fields, 0..) |f, i|
-                    kvs[i] = .{ f.name, i };
-                break :blk .initComptime(kvs);
-            };
+            const wrapper = comptime struct {
+                const ix: std.StaticStringMap(usize) = blk: {
+                    const KV = struct { []const u8, usize };
+                    var kvs: [strc.fields.len]KV = undefined;
+                    for (strc.fields, 0..) |f, i|
+                        kvs[i] = .{ f.name, i };
+                    break :blk .initComptime(kvs);
+                };
 
-            const setter = comptime struct {
                 pub fn set(s: *Self, obj: *T, idx: usize) !void {
                     switch (idx) {
                         inline 0...strc.fields.len - 1 => |i| {
@@ -218,6 +205,25 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         },
                         else => return IbexError.UnknownKey,
                     }
+                }
+
+                pub fn lookup(s: *Self) IbexError!?usize {
+                    var st: StringTokeniser = .{ .r = s.r };
+                    var stok = try st.next();
+
+                    if (stok.terminal)
+                        return ix.get(stok.frag);
+
+                    var ar: std.ArrayList(u8) = .empty;
+                    defer ar.deinit(s.gpa);
+
+                    while (true) : (stok = try st.next()) {
+                        try ar.appendSlice(s.gpa, stok.frag);
+                        if (stok.terminal)
+                            break;
+                    }
+
+                    return ix.get(ar.items);
                 }
             };
 
@@ -232,7 +238,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
                     seen |= @as(SetType, 1) << @intCast(idx);
-                    try setter.set(self, &obj, idx);
+                    try wrapper.set(self, &obj, idx);
                     idx += 1;
                 }
             } else {
@@ -241,12 +247,12 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 
                 var ntag = try self.nextTag();
                 while (ntag != .End) : (ntag = try self.nextTag()) {
-                    // TODO use key directly from source if possible
-                    const key: []const u8 = try self.readTag([]const u8, ntag);
-                    defer self.gpa.free(key);
-                    if (index.get(key)) |idx| {
+                    if (ntag != .String)
+                        return IbexError.TypeMismatch;
+
+                    if (try wrapper.lookup(self)) |idx| {
                         seen |= @as(SetType, 1) << @intCast(idx);
-                        try setter.set(self, &obj, idx);
+                        try wrapper.set(self, &obj, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     }
