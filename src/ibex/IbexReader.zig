@@ -211,7 +211,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     }
                 }
 
-                pub fn lookup(s: *Self) IbexError!?usize {
+                pub fn lookupKey(s: *Self) IbexError!?usize {
                     var st: StringTokeniser = .{ .r = s.r };
                     var stok = try st.next();
 
@@ -254,7 +254,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     if (ntag != .String)
                         return IbexError.TypeMismatch;
 
-                    if (try prox.lookup(self)) |idx| {
+                    if (try prox.lookupKey(self)) |idx| {
                         seen |= @as(SetType, 1) << @intCast(idx);
                         try prox.set(self, &obj, idx);
                     } else if (self.opt.strict_keys) {
