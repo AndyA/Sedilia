@@ -26,12 +26,60 @@ r: *ByteReader,
 gpa: Allocator,
 opt: Options = .{},
 
+pub const StringToken = union(enum) {
+    complete: []const u8,
+    partial: []const u8,
+    terminal: []const u8,
+};
+
+pub const StringTokeniser = struct {
+    const ST = @This();
+    r: *ByteReader,
+    state: enum { INIT, ESCAPE, INSIDE } = .INIT,
+
+    pub fn init(r: *ByteReader) ST {
+        return ST{ .r = r };
+    }
+
+    pub fn next(self: *ST) IbexError!StringToken {
+        const tail = self.r.tail();
+        switch (self.state) {
+            .INIT, .INSIDE => |s| {
+                if (std.mem.findAny(u8, tail, &.{ 0x00, 0x01 })) |esc| {
+                    try self.r.skip(esc + 1);
+                    switch (tail[esc]) {
+                        0x00 => {
+                            return switch (s) {
+                                .INIT => .{ .complete = tail[0..esc] },
+                                .INSIDE => .{ .terminal = tail[0..esc] },
+                                else => unreachable,
+                            };
+                        },
+                        0x01 => {
+                            self.state = .ESCAPE;
+                            return .{ .partial = tail[0..esc] };
+                        },
+                        else => unreachable,
+                    }
+                }
+
+                return IbexError.SyntaxError;
+            },
+            .ESCAPE => {
+                try self.r.skip(1);
+                self.state = .INSIDE;
+                return switch (tail[0]) {
+                    0x01 => .{ .partial = "\x00" },
+                    0x02 => .{ .partial = "\x01" },
+                    else => IbexError.SyntaxError,
+                };
+            },
+        }
+    }
+};
+
 fn nextTag(self: *Self) IbexError!IbexTag {
     return ibex.tagFromByte(try self.r.next());
-}
-
-fn readString(self: *Self) IbexError!void {
-    _ = self;
 }
 
 fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
@@ -103,20 +151,15 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         .String => {
                             if (CT != u8)
                                 return IbexError.TypeMismatch;
-                            const tail = self.r.tail();
-                            var pos: usize = 0;
-                            while (std.mem.findAnyPos(u8, tail, pos, &.{ 0x00, 0x1 })) |esc| {
-                                try ar.appendSlice(self.gpa, tail[0..esc]);
-                                if (tail[esc] == 0x00) {
-                                    try self.r.skip(esc + 1);
-                                    break;
+                            var st: StringTokeniser = .init(self.r);
+                            while (true) {
+                                const stok = try st.next();
+                                switch (stok) {
+                                    .complete, .partial, .terminal => |frag| {
+                                        try ar.appendSlice(self.gpa, frag);
+                                    },
                                 }
-                                if (esc + 1 >= tail.len)
-                                    return IbexError.SyntaxError;
-                                try ar.append(self.gpa, tail[esc + 1] - 1);
-                                pos = esc + 2;
-                            } else {
-                                return IbexError.SyntaxError;
+                                if (stok != .partial) break;
                             }
                         },
                         .Array => {
