@@ -66,4 +66,6 @@ pub const IbexError = error{
     SyntaxError,
     UnexpectedEndOfInput,
     BufferUnderrun,
+    TypeMismatch,
+    ArraySizeMismatch,
 };

@@ -24,14 +24,11 @@ const JSONWriter = struct {
     }
 
     fn stringPart(self: *Self, str: []const u8) IbexError!void {
-        switch (self.state) {
-            .INIT => {
-                try self.w.beginString();
-                self.state = .STRING;
-            },
-            .STRING => {},
-            else => unreachable,
+        if (self.state == .INIT) {
+            try self.w.beginString();
+            self.state = .STRING;
         }
+        assert(self.state == .STRING);
         try self.w.writeEscapedBytes(str);
     }
 

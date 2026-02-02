@@ -101,7 +101,7 @@ pub fn intCodec(comptime T: type) type {
                 .NumNeg => readNegInt(r),
                 .NumNegInf, .NumPosInf => IbexError.Overflow,
                 .NumNegNaN, .NumPosNaN => IbexError.Overflow,
-                else => IbexError.SyntaxError,
+                else => IbexError.TypeMismatch,
             };
         }
 

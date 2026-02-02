@@ -122,17 +122,16 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
         .pointer => |ptr| {
             switch (ptr.size) {
                 .one => {
-                    switch (@typeInfo(ptr.child)) {
-                        .array => {
-                            const E = []const std.meta.Elem(ptr.child);
-                            try self.write(@as(E, v));
-                        },
-                        else => try self.write(v.*),
+                    if (@typeInfo(ptr.child) == .array) {
+                        const E = []const std.meta.Elem(ptr.child);
+                        try self.write(@as(E, v));
+                    } else {
+                        try self.write(v.*);
                     }
                 },
                 .many, .slice => {
                     if (ptr.size == .many and ptr.sentinel() == null)
-                        @compileError("unable to encode type '" ++
+                        @compileError("unable to write type '" ++
                             @typeName(T) ++ "' without sentinel");
                     const slice = if (ptr.size == .many) std.mem.span(v) else v;
                     if (ptr.child == u8) {
@@ -169,7 +168,7 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
                 try self.endObject();
             }
         },
-        else => @compileError("Unable to encode type '" ++ @typeName(T) ++ "'"),
+        else => @compileError("Unable to write type '" ++ @typeName(T) ++ "'"),
     };
 }
 

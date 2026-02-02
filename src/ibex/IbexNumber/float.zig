@@ -196,7 +196,7 @@ pub fn floatCodec(comptime T: type) type {
                 .NumPosNaN => math.nan(T),
                 .NumPos => readNumPos(r),
                 .NumNeg => readNumNeg(r),
-                else => IbexError.SyntaxError,
+                else => IbexError.TypeMismatch,
             };
         }
 
