@@ -69,8 +69,19 @@ const StringTokeniser = struct {
     }
 };
 
+fn skipPastZero(self: *Self) IbexError!void {
+    if (std.mem.findScalar(u8, self.r.tail(), 0x00)) |pos|
+        return self.r.skip(pos + 1);
+
+    return IbexError.SyntaxError;
+}
+
 fn nextTag(self: *Self) IbexError!IbexTag {
-    return ibex.tagFromByte(try self.r.next());
+    while (true) {
+        const tag = try ibex.tagFromByte(try self.r.next());
+        if (tag != .Collation) return tag;
+        try self.skipPastZero();
+    }
 }
 
 fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
@@ -78,19 +89,7 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
     _ = tag;
 }
 
-fn skipPastZero(r: *ByteReader) IbexError!void {
-    if (std.mem.findScalar(u8, r.tail(), 0x00)) |pos|
-        return r.skip(pos + 1);
-
-    return IbexError.SyntaxError;
-}
-
 fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
-    if (tag == .CollatedString) {
-        try skipPastZero(self.r);
-        return self.read(T);
-    }
-
     switch (T) {
         Value => return self.readValueTag(tag),
         else => {},
