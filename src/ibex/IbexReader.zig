@@ -17,11 +17,20 @@ test {
 
 const Self = @This();
 
+pub const Options = struct {
+    strict_keys: bool = false,
+};
+
 r: *ByteReader,
 gpa: Allocator,
+opt: Options = .{},
 
 fn nextTag(self: *Self) IbexError!IbexTag {
     return ibex.tagFromByte(try self.r.next());
+}
+
+fn readString(self: *Self) IbexError!void {
+    _ = self;
 }
 
 pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
@@ -59,6 +68,11 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             }
 
             return buf;
+        },
+        .vector => |vec| {
+            const AT = [vec.len]vec.child;
+            const arr: T = try self.readTag(AT, tag);
+            return arr;
         },
         .pointer => |ptr| {
             const CT = ptr.child;
@@ -115,6 +129,92 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             }
             unreachable;
         },
+        .@"struct" => |strc| {
+            if (@hasDecl(T, "readIbex"))
+                return T.readIbex(self);
+
+            const SetType = @Int(.unsigned, strc.fields.len);
+            const SetFull = std.math.maxInt(SetType);
+
+            const optional, const defaulted = comptime blk: {
+                var opt: SetType = 0;
+                var def: SetType = 0;
+                for (strc.fields, 0..) |f, i| {
+                    if (@typeInfo(f.type) == .optional)
+                        opt |= 1 << i;
+                    if (f.defaultValue() != null)
+                        def |= 1 << i;
+                }
+                break :blk .{ opt, def };
+            };
+
+            const index: std.StaticStringMap(usize) = comptime blk: {
+                const KV = struct { []const u8, usize };
+                var kvs: [strc.fields.len]KV = undefined;
+                for (strc.fields, 0..) |f, i|
+                    kvs[i] = .{ f.name, i };
+                break :blk .initComptime(kvs);
+            };
+
+            const setter = comptime struct {
+                pub fn set(s: *Self, obj: *T, idx: usize) !void {
+                    switch (idx) {
+                        inline 0...strc.fields.len - 1 => |i| {
+                            @field(obj, strc.fields[i].name) =
+                                try s.read(strc.fields[i].type);
+                        },
+                        else => unreachable,
+                    }
+                }
+            };
+
+            var obj: T = undefined;
+            var seen: SetType = 0;
+
+            if (strc.is_tuple) {
+                if (tag != .Array)
+                    return IbexError.TypeMismatch;
+                var ntag = try self.nextTag();
+                var idx: usize = 0;
+                while (ntag != .End) : (ntag = try self.nextTag()) {
+                    seen |= @as(SetType, 1) << @intCast(idx);
+                    try setter.set(self, &obj, idx);
+                    idx += 1;
+                }
+            } else {
+                if (tag != .Object)
+                    return IbexError.TypeMismatch;
+
+                var ntag = try self.nextTag();
+                while (ntag != .End) : (ntag = try self.nextTag()) {
+                    // TODO use key directly from source if possible
+                    const key: []const u8 = try self.readTag([]const u8, ntag);
+                    defer self.gpa.free(key);
+                    if (index.get(key)) |idx| {
+                        seen |= @as(SetType, 1) << @intCast(idx);
+                        try setter.set(self, &obj, idx);
+                    } else if (self.opt.strict_keys) {
+                        return IbexError.UnknownKey;
+                    }
+                }
+            }
+
+            if (seen != SetFull) {
+                inline for (strc.fields, 0..) |f, i| {
+                    const bit = @as(SetType, 1) << i;
+                    if (seen & bit == 0) {
+                        if (defaulted & bit != 0)
+                            @field(obj, f.name) = f.defaultValue().?
+                        else if (optional & bit != 0)
+                            @field(obj, f.name) = null
+                        else
+                            return IbexError.MissingKeys;
+                    }
+                }
+            }
+
+            return obj;
+        },
         else => @compileError("Unable to read type '" ++ @typeName(T) ++ "'"),
     }
 }
@@ -150,6 +250,12 @@ test {
     try testRead(
         gpa,
         &.{ t(.Array), t(.False), t(.True), t(.False), t(.End) },
+        []const bool,
+        &.{ false, true, false },
+    );
+    try testRead(
+        gpa,
+        &.{ t(.Array), t(.False), t(.True), t(.False), t(.End) },
         [3]bool,
         .{ false, true, false },
     );
@@ -164,5 +270,49 @@ test {
         &.{ t(.Array), t(.False), t(.True), t(.False), t(.End) },
         *const [3]bool,
         &.{ false, true, false },
+    );
+    try testRead(
+        gpa,
+        &.{ t(.Array), t(.False), t(.True), t(.False), t(.End) },
+        @Vector(3, bool),
+        .{ false, true, false },
+    );
+
+    const S1 = struct {
+        name: []const u8,
+        checked: bool,
+        rate: f64 = 17.5,
+    };
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+            .{t(.End)},
+        S1,
+        .{ .name = "Andy", .checked = false, .rate = 1.5 },
+    );
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.End)},
+        S1,
+        .{ .name = "Andy", .checked = false, .rate = 1.5 },
+    );
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.End)},
+        S1,
+        .{ .name = "Andy", .checked = false, .rate = 17.5 },
     );
 }
