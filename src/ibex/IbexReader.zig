@@ -26,12 +26,12 @@ r: *ByteReader,
 gpa: Allocator,
 opt: Options = .{},
 
-pub const StringToken = struct {
+const StringToken = struct {
     frag: []const u8,
     terminal: bool = false,
 };
 
-pub const StringTokeniser = struct {
+const StringTokeniser = struct {
     const ST = @This();
     r: *ByteReader,
     state: enum { INIT, ESCAPE, INSIDE } = .INIT,
@@ -78,7 +78,7 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
     _ = tag;
 }
 
-pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
+fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
     switch (T) {
         Value => return self.readValueTag(tag),
         else => {},
