@@ -173,37 +173,41 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (@hasDecl(T, "readIbex"))
                 return T.readIbex(self);
 
-            const SetType = @Int(.unsigned, strc.fields.len);
+            const fields = strc.fields;
+            const SetType = @Int(.unsigned, fields.len);
             const SetFull = std.math.maxInt(SetType);
-
-            const optional, const defaulted = comptime blk: {
-                var opt: SetType = 0;
-                var def: SetType = 0;
-                for (strc.fields, 0..) |f, i| {
-                    if (@typeInfo(f.type) == .optional)
-                        opt |= 1 << i;
-                    if (f.defaultValue() != null)
-                        def |= 1 << i;
-                }
-                break :blk .{ opt, def };
-            };
 
             const wrapper = comptime struct {
                 // TODO: why not build the index using Ibex escaped strings?
                 // Then we never have to handle escaped keys explicitly
                 const ix: std.StaticStringMap(usize) = blk: {
                     const KV = struct { []const u8, usize };
-                    var kvs: [strc.fields.len]KV = undefined;
-                    for (strc.fields, 0..) |f, i|
+                    var kvs: [fields.len]KV = undefined;
+                    for (fields, 0..) |f, i|
                         kvs[i] = .{ f.name, i };
                     break :blk .initComptime(kvs);
                 };
 
                 pub fn set(s: *Self, obj: *T, idx: usize) !void {
                     switch (idx) {
-                        inline 0...strc.fields.len - 1 => |i| {
-                            @field(obj, strc.fields[i].name) =
-                                try s.read(strc.fields[i].type);
+                        inline 0...fields.len - 1 => |i| {
+                            @field(obj, fields[i].name) =
+                                try s.read(fields[i].type);
+                        },
+                        else => return IbexError.UnknownKey,
+                    }
+                }
+
+                pub fn setDefault(obj: *T, idx: usize) !void {
+                    switch (idx) {
+                        inline 0...fields.len - 1 => |i| {
+                            const f = fields[i];
+                            if (f.defaultValue()) |dv|
+                                @field(obj, f.name) = dv
+                            else if (@typeInfo(f.type) == .optional)
+                                @field(obj, f.name) = null
+                            else
+                                return IbexError.MissingKeys;
                         },
                         else => return IbexError.UnknownKey,
                     }
@@ -262,16 +266,9 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             }
 
             if (seen != SetFull) {
-                inline for (strc.fields, 0..) |f, i| {
-                    const bit = @as(SetType, 1) << i;
-                    if (seen & bit == 0) {
-                        if (defaulted & bit != 0)
-                            @field(obj, f.name) = f.defaultValue().?
-                        else if (optional & bit != 0)
-                            @field(obj, f.name) = null
-                        else
-                            return IbexError.MissingKeys;
-                    }
+                inline for (0..fields.len) |i| {
+                    if (seen & (@as(SetType, 1) << i) == 0)
+                        try wrapper.setDefault(&obj, i);
                 }
             }
 
