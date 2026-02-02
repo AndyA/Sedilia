@@ -38,18 +38,16 @@ fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
         .End => IbexError.SyntaxError, // may not occur on its own
         .Null, .False, .True => {},
+        .NumNegNaN, .NumNegInf, .NumNegZero => {},
+        .NumPosZero, .NumPosInf, .NumPosNaN => {},
         .String => skipPastZero(r),
         .Collation => {
             try skipPastZero(r);
             return skip(r);
         },
-        .NumNegNaN, .NumNegInf => {},
         .NumNeg => skipNumNeg(r),
-        .NumNegZero, .NumPosZero => {},
         .NumPos => skipNumPos(r),
-        .NumPosInf, .NumPosNaN => {},
-        .Array => skipPastEnd(r),
-        .Object => skipPastEnd(r),
+        .Array, .Object => skipPastEnd(r),
     };
 }
 
