@@ -34,12 +34,12 @@ const StringToken = struct {
 const StringTokeniser = struct {
     const ST = @This();
     r: *ByteReader,
-    state: enum { INIT, ESCAPE, INSIDE } = .INIT,
+    state: enum { INIT, ESCAPE } = .INIT,
 
     pub fn next(self: *ST) IbexError!StringToken {
         const tail = self.r.tail();
         switch (self.state) {
-            .INIT, .INSIDE => {
+            .INIT => {
                 if (std.mem.findAny(u8, tail, &.{ 0x00, 0x01 })) |esc| {
                     try self.r.skip(esc + 1);
                     switch (tail[esc]) {
@@ -58,7 +58,7 @@ const StringTokeniser = struct {
             },
             .ESCAPE => {
                 try self.r.skip(1);
-                self.state = .INSIDE;
+                self.state = .INIT;
                 return switch (tail[0]) {
                     0x01 => .{ .frag = "\x00" },
                     0x02 => .{ .frag = "\x01" },
