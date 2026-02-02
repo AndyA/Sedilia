@@ -78,7 +78,19 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
     _ = tag;
 }
 
+fn skipPastZero(r: *ByteReader) IbexError!void {
+    if (std.mem.findScalar(u8, r.tail(), 0x00)) |pos|
+        return r.skip(pos + 1);
+
+    return IbexError.SyntaxError;
+}
+
 fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
+    if (tag == .CollatedString) {
+        try skipPastZero(self.r);
+        return self.read(T);
+    }
+
     switch (T) {
         Value => return self.readValueTag(tag),
         else => {},
@@ -264,7 +276,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 
             var missing = ~seen;
             while (missing != 0) {
-                const next = @ctz(missing);
+                const next = @ctz(missing); // TODO: how does this scale?
                 try prox.default(&obj, next);
                 missing = missing & (missing - 1);
             }
