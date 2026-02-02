@@ -37,15 +37,20 @@ fn skipPastZero(r: *ByteReader) IbexError!void {
     return IbexError.SyntaxError;
 }
 
+fn skipCollation(r: *ByteReader) IbexError!void {
+    while (true) {
+        try skipPastZero(r);
+        const tag = try ibex.tagFromByte(try r.next());
+        if (tag != .Collation) return skipTag(r, tag);
+    }
+}
+
 fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
         .End => IbexError.SyntaxError, // may not occur on its own
         .Null, .False, .True => {},
         .String => skipPastZero(r),
-        .Collation => {
-            try skipPastZero(r);
-            return skip(r);
-        },
+        .Collation => skipCollation(r),
         .NumNegNaN, .NumNegInf => {},
         .NumNeg => skipNumNeg(r),
         .NumNegZero, .NumPosZero => {},
