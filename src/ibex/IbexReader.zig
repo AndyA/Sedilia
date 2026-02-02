@@ -1,6 +1,7 @@
 const std = @import("std");
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
+const Value = std.json.Value;
 
 const ibex = @import("./ibex.zig");
 const IbexTag = ibex.IbexTag;
@@ -33,7 +34,17 @@ fn readString(self: *Self) IbexError!void {
     _ = self;
 }
 
+fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
+    _ = self;
+    _ = tag;
+}
+
 pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
+    switch (T) {
+        Value => return self.readValueTag(tag),
+        else => {},
+    }
+
     switch (@typeInfo(T)) {
         .int, .float => return IbexNumber(T).readTag(self.r, tag),
         .bool => return switch (tag) {
@@ -127,7 +138,6 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 },
                 else => unreachable,
             }
-            unreachable;
         },
         .@"struct" => |strc| {
             if (@hasDecl(T, "readIbex"))
@@ -163,7 +173,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                             @field(obj, strc.fields[i].name) =
                                 try s.read(strc.fields[i].type);
                         },
-                        else => unreachable,
+                        else => return IbexError.UnknownKey,
                     }
                 }
             };
@@ -174,6 +184,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (strc.is_tuple) {
                 if (tag != .Array)
                     return IbexError.TypeMismatch;
+
                 var ntag = try self.nextTag();
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
