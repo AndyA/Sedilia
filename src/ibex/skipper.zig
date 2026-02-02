@@ -21,13 +21,10 @@ fn skipNumNeg(r: *ByteReader) IbexError!void {
 
 fn skipPastEnd(r: *ByteReader) IbexError!void {
     while (true) {
-        const nb = try r.peek();
-        const tag: IbexTag = @enumFromInt(nb);
+        const tag = try ibex.tagFromByte(try r.next());
         if (tag == .End) break;
-        try skip(r);
+        try skipTag(r, tag);
     }
-
-    _ = try r.next(); // swallow .End
 }
 
 fn skipPastZero(r: *ByteReader) IbexError!void {
