@@ -120,9 +120,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             return buf;
         },
         .vector => |vec| {
-            const AT = [vec.len]vec.child;
-            const arr: T = try self.readTag(AT, tag);
-            return arr;
+            return @as(T, try self.readTag([vec.len]vec.child, tag));
         },
         .pointer => |ptr| {
             const CT = ptr.child;
