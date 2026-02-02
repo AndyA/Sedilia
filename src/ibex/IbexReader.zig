@@ -189,6 +189,8 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             };
 
             const wrapper = comptime struct {
+                // TODO: why not build the index using Ibex escaped strings?
+                // Then we never have to handle escaped keys explicitly
                 const ix: std.StaticStringMap(usize) = blk: {
                     const KV = struct { []const u8, usize };
                     var kvs: [strc.fields.len]KV = undefined;
