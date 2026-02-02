@@ -186,7 +186,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     break :blk .initComptime(kvs);
                 };
 
-                pub fn set(s: *Self, obj: *T, idx: usize) !void {
+                pub fn read(s: *Self, obj: *T, idx: usize) !void {
                     switch (idx) {
                         inline 0...fields.len - 1 => |i| {
                             @field(obj, fields[i].name) =
@@ -196,7 +196,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     }
                 }
 
-                pub fn setDefault(obj: *T, idx: usize) !void {
+                pub fn default(obj: *T, idx: usize) !void {
                     switch (idx) {
                         inline 0...fields.len - 1 => |i| {
                             const f = fields[i];
@@ -242,7 +242,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
                     seen |= @as(SetType, 1) << @intCast(idx);
-                    try prox.set(self, &obj, idx);
+                    try prox.read(self, &obj, idx);
                     idx += 1;
                 }
             } else {
@@ -256,7 +256,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 
                     if (try prox.lookupKey(self)) |idx| {
                         seen |= @as(SetType, 1) << @intCast(idx);
-                        try prox.set(self, &obj, idx);
+                        try prox.read(self, &obj, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     }
@@ -266,7 +266,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (seen != SetFull) {
                 inline for (0..fields.len) |i| {
                     if (seen & (@as(SetType, 1) << i) == 0)
-                        try prox.setDefault(&obj, i);
+                        try prox.default(&obj, i);
                 }
             }
 
