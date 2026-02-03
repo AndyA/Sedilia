@@ -130,7 +130,7 @@ pub fn writeIbex(self: *const JSON, w: *IbexWriter) IbexError!void {
     try writer.write(self.json);
 }
 
-fn encodeString(r: IbexReader, writer: std.Io.Writer) IbexError!void {
+fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
     var st = r.stringTokeniser();
     try writer.writeByte('"');
     while (true) {
@@ -141,7 +141,7 @@ fn encodeString(r: IbexReader, writer: std.Io.Writer) IbexError!void {
     try writer.writeByte('"');
 }
 
-fn ibexToJSONTag(r: IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
+fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
         var peeker = r.r.*;
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
@@ -170,7 +170,7 @@ fn ibexToJSONTag(r: IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
         .String => {
             try sfy.beginWriteRaw();
             try encodeString(r, sfy.writer);
-            try sfy.endWriteRaw();
+            sfy.endWriteRaw();
         },
         .Array => {
             try sfy.beginArray();
@@ -188,7 +188,7 @@ fn ibexToJSONTag(r: IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
                     return IbexError.TypeMismatch;
                 try sfy.beginObjectFieldRaw();
                 try encodeString(r, sfy.writer);
-                try sfy.endObjectFieldRaw();
+                sfy.endObjectFieldRaw();
                 try ibexToJSONTag(r, try r.nextTag(), sfy);
             }
             try sfy.endObject();
@@ -197,8 +197,11 @@ fn ibexToJSONTag(r: IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     }
 }
 
-pub fn readIbex(r: IbexReader, tag: IbexTag) IbexError!JSON {
-    _ = r;
-    _ = tag;
-    unreachable;
+pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!JSON {
+    var buf: std.ArrayListUnmanaged(u8) = .empty;
+    var w = std.Io.Writer.Allocating.fromArrayList(r.gpa, &buf);
+    errdefer w.deinit();
+    var sfy = Stringify{ .writer = &w.writer };
+    try ibexToJSONTag(r, tag, &sfy);
+    return JSON{ .json = try w.toOwnedSlice() };
 }

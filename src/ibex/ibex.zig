@@ -70,4 +70,5 @@ pub const IbexError = error{
     ArraySizeMismatch,
     UnknownKey,
     MissingKeys,
+    WriteFailed,
 };

@@ -464,3 +464,29 @@ test {
         .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = null },
     );
 }
+
+test "readIbex JSON" {
+    const JSON = @import("./JSON.zig");
+    const gpa = std.testing.allocator;
+
+    try testRead(gpa, &.{t(.Null)}, JSON, .{ .json = "null" });
+    try testRead(gpa, &.{ t(.NumPos), 0x80, 0x00 }, JSON, .{ .json = "1" });
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "tags" ++ .{t(.End)} ++
+            .{t(.Array)} ++
+            "" ++ .{t(.String)} ++ "zig" ++ .{t(.End)} ++
+            "" ++ .{t(.String)} ++ "c" ++ .{t(.End)} ++
+            "" ++ .{t(.String)} ++ "perl" ++ .{t(.End)} ++
+            "" ++ .{t(.End)} ++
+            .{t(.End)},
+        JSON,
+        .{ .json =
+        \\{"name":"Andy","checked":false,"tags":["zig","c","perl"]}
+    },
+    );
+}
