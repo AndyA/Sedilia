@@ -158,12 +158,14 @@ test intCodec {
             const tv = intTestVector(T);
             for (tv.slice()) |value| {
                 var buf: [256]u8 = undefined;
-                var w = ByteWriter.Fixed.init(&buf);
-                try codec.write(&w.bw, value);
+                var writer = std.Io.Writer.fixed(&buf);
+                var w = ByteWriter{ .writer = &writer };
+                try codec.write(&w, value);
                 // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-                try std.testing.expectEqual(w.slice().len, codec.encodedLength(value));
-                tt.checkFloat(w.slice());
-                var r = ByteReader{ .buf = w.slice() };
+                const output = writer.buffered();
+                try std.testing.expectEqual(output.len, codec.encodedLength(value));
+                tt.checkFloat(output);
+                var r = ByteReader{ .buf = output };
                 try std.testing.expectEqual(value, try codec.read(&r));
             }
         }

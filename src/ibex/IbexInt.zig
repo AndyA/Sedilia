@@ -121,9 +121,10 @@ pub fn write(w: *ByteWriter, value: i64) IbexError!void {
 test write {
     for (test_cases) |tc| {
         var buf: [9]u8 = undefined;
-        var w = ByteWriter.Fixed.init(&buf);
-        try IbexInt.write(&w.bw, tc.want);
-        try std.testing.expectEqualDeep(tc.buf, w.slice());
+        var writer = std.Io.Writer.fixed(&buf);
+        var w = ByteWriter{ .writer = &writer };
+        try IbexInt.write(&w, tc.want);
+        try std.testing.expectEqualDeep(tc.buf, writer.buffered());
     }
 }
 
@@ -131,10 +132,12 @@ test "round trip" {
     var buf: [9]u8 = undefined;
     for (0..140000) |offset| {
         const value = @as(i64, @intCast(offset)) - 70000;
-        var w = ByteWriter.Fixed.init(&buf);
-        try IbexInt.write(&w.bw, value);
-        try std.testing.expectEqual(w.slice().len, IbexInt.encodedLength(value));
-        var r = ByteReader{ .buf = w.slice() };
+        var writer = std.Io.Writer.fixed(&buf);
+        var w = ByteWriter{ .writer = &writer };
+        try IbexInt.write(&w, value);
+        const output = writer.buffered();
+        try std.testing.expectEqual(output.len, IbexInt.encodedLength(value));
+        var r = ByteReader{ .buf = output };
         const got = IbexInt.read(&r);
         try std.testing.expectEqual(value, got);
     }

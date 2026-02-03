@@ -59,11 +59,12 @@ const general_cases = &[_]TestCase{
 test writeMantissa {
     inline for (general_cases) |tc| {
         var buf: [256]u8 = undefined;
-        var w = ByteWriter.Fixed.init(&buf);
-        try writeMantissa(tc.T, &w.bw, tc.mant);
-        // std.debug.print("T={any}, m={x} encoded={any}\n", .{ tc.T, tc.mant, w.slice() });
-        try std.testing.expectEqual(w.slice().len, mantissaLength(tc.T, tc.mant));
-        try std.testing.expectEqualDeep(tc.bytes, w.slice());
+        var writer = std.Io.Writer.fixed(&buf);
+        var w = ByteWriter{ .writer = &writer };
+        try writeMantissa(tc.T, &w, tc.mant);
+        const output = writer.buffered();
+        try std.testing.expectEqual(output.len, mantissaLength(tc.T, tc.mant));
+        try std.testing.expectEqualDeep(tc.bytes, output);
     }
 }
 

@@ -18,10 +18,11 @@ fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: comptime_fl
     const bytes = @import("./bytes.zig");
 
     var buf: [256]u8 = undefined;
-    var w = bytes.ByteWriter.Fixed.init(&buf);
-    try IbexNumber(TWrite).write(&w.bw, value);
+    var writer = std.Io.Writer.fixed(&buf);
+    var w = bytes.ByteWriter{ .writer = &writer };
+    try IbexNumber(TWrite).write(&w, value);
 
-    var r = bytes.ByteReader{ .buf = w.slice() };
+    var r = bytes.ByteReader{ .buf = writer.buffered() };
     const res = try IbexNumber(TRead).read(&r);
     const got: f128 = switch (@typeInfo(TRead)) {
         .int => @floatFromInt(res),

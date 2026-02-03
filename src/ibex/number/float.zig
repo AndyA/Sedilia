@@ -260,13 +260,15 @@ fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: TMost(TWrit
     }
     const enc = floatCodec(TWrite);
     var buf: [256]u8 = undefined;
-    var w = ByteWriter.Fixed.init(&buf);
-    try enc.write(&w.bw, @floatCast(value));
+    var writer = std.Io.Writer.fixed(&buf);
+    var w = ByteWriter{ .writer = &writer };
+    try enc.write(&w, @floatCast(value));
     // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-    try std.testing.expectEqual(w.slice().len, enc.encodedLength(@floatCast(value)));
+    const rep = writer.buffered();
+    try std.testing.expectEqual(rep.len, enc.encodedLength(@floatCast(value)));
 
     const dec = floatCodec(TRead);
-    var r = ByteReader{ .buf = w.slice() };
+    var r = ByteReader{ .buf = rep };
 
     if (isOverflow(TRead, value)) {
         const res = dec.read(&r);
