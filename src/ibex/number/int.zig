@@ -109,11 +109,6 @@ pub fn intCodec(comptime T: type) type {
             const nb = try r.next();
             return readTag(r, @enumFromInt(nb));
         }
-
-        pub fn skip(r: *ByteReader) IbexError!void {
-            const skipper = @import("../skipper.zig");
-            return skipper.skip(r);
-        }
     };
 }
 
