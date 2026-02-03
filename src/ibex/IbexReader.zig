@@ -393,9 +393,13 @@ test {
             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
             .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
             .{t(.String)} ++ "tags" ++ .{t(.End)} ++
-            .{ t(.Array), t(.String) } ++ "zig" ++ .{ t(.End), t(.End) } ++
+            .{t(.Array)} ++
+            .{t(.String)} ++ "zig" ++ .{t(.End)} ++
+            .{t(.String)} ++ "c" ++ .{t(.End)} ++
+            .{t(.String)} ++ "perl" ++ .{t(.End)} ++
+            .{t(.End)} ++
             .{t(.End)},
         S1,
-        .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = &.{"zig"} },
+        .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = &.{ "zig", "c", "perl" } },
     );
 }
