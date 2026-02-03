@@ -79,8 +79,6 @@ fn ObjectProxy(comptime T: type) type {
         seen: SetType = 0,
         obj: T = undefined,
 
-        // TODO: why not build the index using Ibex escaped strings?
-        // Then we never have to handle escaped keys explicitly
         const ix: std.StaticStringMap(usize) = blk: {
             const KV = struct { []const u8, usize };
             var kvs: [fields.len]KV = undefined;
