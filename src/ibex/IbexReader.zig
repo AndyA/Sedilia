@@ -11,6 +11,7 @@ const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 
 const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
+const skipper = @import("./skipper.zig");
 
 test {
     std.testing.refAllDecls(@This());
