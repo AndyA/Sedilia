@@ -166,6 +166,7 @@ fn nextTag(self: *Self) IbexError!IbexTag {
 fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
     _ = self;
     _ = tag;
+    unreachable;
 }
 
 fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
