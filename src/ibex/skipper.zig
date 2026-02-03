@@ -6,7 +6,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const IbexInt = @import("./IbexInt.zig");
-const mantissa = @import("./IbexNumber/mantissa.zig");
+const mantissa = @import("./number/mantissa.zig");
 
 fn skipNumPos(r: *ByteReader) IbexError!void {
     try IbexInt.skip(r);

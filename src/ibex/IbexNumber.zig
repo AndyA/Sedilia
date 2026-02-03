@@ -1,6 +1,6 @@
 const std = @import("std");
-const intCodec = @import("./IbexNumber/int.zig").intCodec;
-const floatCodec = @import("./IbexNumber/float.zig").floatCodec;
+const intCodec = @import("./number/int.zig").intCodec;
+const floatCodec = @import("./number/float.zig").floatCodec;
 
 pub fn IbexNumber(comptime T: type) type {
     return switch (@typeInfo(T)) {
