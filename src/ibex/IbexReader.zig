@@ -27,12 +27,12 @@ r: *ByteReader,
 gpa: Allocator,
 opt: Options = .{},
 
-const StringToken = struct {
+pub const StringToken = struct {
     frag: []const u8,
     terminal: bool = false,
 };
 
-const StringTokeniser = struct {
+pub const StringTokeniser = struct {
     const ST = @This();
     r: *ByteReader,
     state: enum { INIT, ESCAPE } = .INIT,
@@ -88,7 +88,7 @@ fn ObjectProxy(comptime T: type) type {
         };
 
         pub fn lookupKey(_: *const OP, rdr: *Self) IbexError!?usize {
-            var st: StringTokeniser = .{ .r = rdr.r };
+            var st = rdr.stringTokeniser();
             var stok = try st.next();
 
             if (stok.terminal)
@@ -152,7 +152,7 @@ fn skipPastZero(self: *Self) IbexError!void {
     return IbexError.SyntaxError;
 }
 
-fn nextTag(self: *Self) IbexError!IbexTag {
+pub fn nextTag(self: *Self) IbexError!IbexTag {
     while (true) {
         const tag = try ibex.tagFromByte(try self.r.next());
         if (tag != .Collation) return tag;
@@ -160,7 +160,7 @@ fn nextTag(self: *Self) IbexError!IbexTag {
     }
 }
 
-fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
+fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
     if (tag.isNumber()) {
         var peeker = self.r.*;
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
@@ -184,7 +184,7 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
 
             var ntag = try self.nextTag();
             while (ntag != .End) : (ntag = try self.nextTag()) {
-                try arr.append(self.readValueTag(ntag));
+                try arr.append(self.readValue(ntag));
             }
             return Value{ .array = arr };
         },
@@ -195,7 +195,7 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
             var ntag = try self.nextTag();
             while (ntag != .End) : (ntag = try self.nextTag()) {
                 const key = try self.readTag([]const u8, ntag);
-                const value = try self.readValueTag(try self.nextTag());
+                const value = try self.readValue(try self.nextTag());
                 try obj.put(key, value);
             }
 
@@ -205,9 +205,13 @@ fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
     }
 }
 
-fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
+pub fn stringTokeniser(self: *Self) StringTokeniser {
+    return .{ .r = self.r };
+}
+
+pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
     switch (T) {
-        Value => return self.readValueTag(tag),
+        Value => return self.readValue(tag),
         else => {},
     }
 
@@ -267,7 +271,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         .String => {
                             if (CT != u8)
                                 return IbexError.TypeMismatch;
-                            var st: StringTokeniser = .{ .r = self.r };
+                            var st = self.stringTokeniser();
                             while (true) {
                                 const stok = try st.next();
                                 try ar.appendSlice(self.gpa, stok.frag);

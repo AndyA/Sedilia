@@ -1,12 +1,17 @@
 const std = @import("std");
 const print = std.debug.print;
 const assert = std.debug.assert;
+const Stringify = std.json.Stringify;
 const Allocator = std.mem.Allocator;
+
 const ibex = @import("./ibex.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
+const number = @import("./IbexNumber.zig");
+
 const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
+
 const isNumberFormattedLikeAnInteger = std.json.Scanner.isNumberFormattedLikeAnInteger;
 
 const JSON = @This();
@@ -123,6 +128,73 @@ pub fn writeIbex(self: *const JSON, w: *IbexWriter) IbexError!void {
     defer arena.deinit();
     var writer = JSONWriter{ .gpa = arena.allocator(), .w = w };
     try writer.write(self.json);
+}
+
+fn encodeString(r: IbexReader, writer: std.Io.Writer) IbexError!void {
+    var st = r.stringTokeniser();
+    try writer.writeByte('"');
+    while (true) {
+        const frag = try st.next();
+        try Stringify.encodeJsonStringChars(frag.frag, .{ .escape_unicode = true }, writer);
+        if (frag.terminal) break;
+    }
+    try writer.writeByte('"');
+}
+
+fn ibexToJSONTag(r: IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
+    if (tag.isNumber()) {
+        var peeker = r.r.*;
+        const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
+        if (meta.intBits()) |bits| {
+            if (bits <= 63) {
+                const n = try r.readTag(i64, tag);
+                return sfy.write(n);
+            } else {
+                const n = try r.readTag(i128, tag);
+                return sfy.write(n);
+            }
+        } else {
+            if (meta.exponent >= -1022 and meta.exponent <= 1023) {
+                const n = try r.readTag(f64, tag);
+                return sfy.write(n);
+            } else {
+                const n = try r.readTag(f128, tag);
+                return sfy.write(n);
+            }
+        }
+    }
+
+    switch (tag) {
+        .Null => try sfy.write(null),
+        .False, .True => try sfy.write(tag == .True),
+        .String => {
+            try sfy.beginWriteRaw();
+            try encodeString(r, sfy.writer);
+            try sfy.endWriteRaw();
+        },
+        .Array => {
+            try sfy.beginArray();
+            var ntag = try r.nextTag();
+            while (ntag != .End) : (ntag = try r.nextTag()) {
+                try ibexToJSONTag(r, ntag, sfy);
+            }
+            try sfy.endArray();
+        },
+        .Object => {
+            try sfy.beginObject();
+            var ntag = try r.nextTag();
+            while (ntag != .End) : (ntag = try r.nextTag()) {
+                if (ntag != .String)
+                    return IbexError.TypeMismatch;
+                try sfy.beginObjectFieldRaw();
+                try encodeString(r, sfy.writer);
+                try sfy.endObjectFieldRaw();
+                try ibexToJSONTag(r, try r.nextTag(), sfy);
+            }
+            try sfy.endObject();
+        },
+        else => unreachable,
+    }
 }
 
 pub fn readIbex(r: IbexReader, tag: IbexTag) IbexError!JSON {
