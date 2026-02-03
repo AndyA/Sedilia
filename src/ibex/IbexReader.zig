@@ -402,4 +402,15 @@ test {
         S1,
         .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = &.{ "zig", "c", "perl" } },
     );
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "unknown key" ++ .{ t(.End), t(.True) } ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.End)},
+        S1,
+        .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = null },
+    );
 }
