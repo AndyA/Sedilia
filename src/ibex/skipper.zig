@@ -34,7 +34,7 @@ fn skipPastZero(r: *ByteReader) IbexError!void {
     return IbexError.SyntaxError;
 }
 
-fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
+pub fn skipTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
         .End => IbexError.SyntaxError, // may not occur on its own
         .Null, .False, .True => {},

@@ -296,7 +296,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
         },
         .@"struct" => |strc| {
             if (@hasDecl(T, "readIbex"))
-                return T.readIbex(self);
+                return T.readIbex(self, tag);
 
             var prox = ObjectProxy(T){};
 

@@ -3,6 +3,7 @@ const print = std.debug.print;
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 const ibex = @import("./ibex.zig");
+const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
 const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
@@ -124,6 +125,8 @@ pub fn writeIbex(self: *const JSON, w: *IbexWriter) IbexError!void {
     try writer.write(self.json);
 }
 
-pub fn readIbex(r: IbexReader) IbexError!JSON {
+pub fn readIbex(r: IbexReader, tag: IbexTag) IbexError!JSON {
     _ = r;
+    _ = tag;
+    unreachable;
 }
