@@ -270,6 +270,8 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         try prox.read(self, &obj, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
+                    } else {
+                        try skipper.skip(self.r);
                     }
                 }
             }
@@ -350,6 +352,7 @@ test {
         name: []const u8,
         checked: bool,
         rate: f64 = 17.5,
+        tags: ?[]const []const u8,
     };
 
     try testRead(
@@ -360,7 +363,7 @@ test {
             .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
             .{t(.End)},
         S1,
-        .{ .name = "Andy", .checked = false, .rate = 1.5 },
+        .{ .name = "Andy", .checked = false, .rate = 1.5, .tags = null },
     );
 
     try testRead(
@@ -371,7 +374,7 @@ test {
             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
             .{t(.End)},
         S1,
-        .{ .name = "Andy", .checked = false, .rate = 1.5 },
+        .{ .name = "Andy", .checked = false, .rate = 1.5, .tags = null },
     );
 
     try testRead(
@@ -381,6 +384,18 @@ test {
             .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
             .{t(.End)},
         S1,
-        .{ .name = "Andy", .checked = false, .rate = 17.5 },
+        .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = null },
+    );
+
+    try testRead(
+        gpa,
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "tags" ++ .{t(.End)} ++
+            .{ t(.Array), t(.String) } ++ "zig" ++ .{ t(.End), t(.End) } ++
+            .{t(.End)},
+        S1,
+        .{ .name = "Andy", .checked = false, .rate = 17.5, .tags = &.{"zig"} },
     );
 }
