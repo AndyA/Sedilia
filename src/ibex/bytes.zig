@@ -41,7 +41,7 @@ pub const ByteReader = struct {
     }
 };
 
-pub const ByteWriter = struct {
+const ByteWriter1 = struct {
     const Self = @This();
     buf: []u8,
     flip: u8 = 0x00,
@@ -56,6 +56,7 @@ pub const ByteWriter = struct {
     }
 
     pub fn append(self: *Self, bytes: []const u8) IbexError!void {
+        assert(self.flip == 0x00);
         if (self.pos + bytes.len > self.buf.len)
             return IbexError.BufferFull;
         @memcpy(self.buf[self.pos .. self.pos + bytes.len], bytes);
@@ -69,4 +70,53 @@ pub const ByteWriter = struct {
     pub fn negate(self: *Self) void {
         self.flip = ~self.flip;
     }
+
+    pub const Fixed = struct {
+        bw: Self,
+
+        pub fn init(buf: []u8) Fixed {
+            return Fixed{ .bw = Self{ .buf = buf } };
+        }
+
+        pub fn slice(self: *const Fixed) []const u8 {
+            return self.bw.slice();
+        }
+    };
 };
+
+const ByteWriter2 = struct {
+    const BW = @This();
+
+    writer: *std.Io.Writer,
+    flip: u8 = 0x00,
+
+    pub fn put(self: *BW, b: u8) IbexError!void {
+        try self.writer.writeByte(b ^ self.flip);
+    }
+
+    pub fn append(self: *BW, bytes: []const u8) IbexError!void {
+        assert(self.flip == 0x00);
+        try self.writer.writeAll(bytes);
+    }
+
+    pub fn negate(self: *BW) void {
+        self.flip = ~self.flip;
+    }
+
+    pub const Fixed = struct {
+        bw: BW = undefined,
+        writer: std.Io.Writer,
+
+        pub fn init(buf: []u8) Fixed {
+            var fixed = Fixed{ .writer = std.Io.Writer.fixed(buf) };
+            fixed.bw = BW{ .writer = &fixed.writer };
+            return fixed;
+        }
+
+        pub fn slice(self: *const Fixed) []const u8 {
+            return self.writer.buffer[0..self.writer.end];
+        }
+    };
+};
+
+pub const ByteWriter = ByteWriter1;

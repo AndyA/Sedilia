@@ -176,8 +176,8 @@ const bm = @import("../support/bm.zig");
 
 fn testWrite(value: anytype, expect: []const u8) !void {
     var buf: [256]u8 = undefined;
-    var bw = ByteWriter{ .buf = &buf };
-    var iw = Self{ .w = &bw };
+    var bw = ByteWriter.Fixed.init(&buf);
+    var iw = Self{ .w = &bw.bw };
     try iw.write(value);
     // print(">> {any} ({any})\n", .{ value, @TypeOf(value) });
     // bm.hexDump(bw.slice(), 0);

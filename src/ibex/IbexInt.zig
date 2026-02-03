@@ -59,7 +59,7 @@ pub fn skip(r: *ByteReader) !void {
 
 test skip {
     for (test_cases) |tc| {
-        var r = ByteReader{ .buf = tc.buf, .flip = tc.flip };
+        var r = ByteReader{ .buf = tc.buf };
         try IbexInt.skip(&r);
         try std.testing.expectEqual(tc.buf.len, r.pos);
     }
@@ -90,7 +90,7 @@ pub fn read(r: *ByteReader) IbexError!i64 {
 
 test read {
     for (test_cases) |tc| {
-        var r = ByteReader{ .buf = tc.buf, .flip = tc.flip };
+        var r = ByteReader{ .buf = tc.buf };
         try std.testing.expectEqual(tc.want, IbexInt.read(&r));
         try std.testing.expectEqual(tc.buf.len, r.pos);
     }
@@ -121,10 +121,9 @@ pub fn write(w: *ByteWriter, value: i64) IbexError!void {
 test write {
     for (test_cases) |tc| {
         var buf: [9]u8 = undefined;
-        var w = ByteWriter{ .buf = &buf, .flip = tc.flip };
-        try IbexInt.write(&w, tc.want);
+        var w = ByteWriter.Fixed.init(&buf);
+        try IbexInt.write(&w.bw, tc.want);
         try std.testing.expectEqualDeep(tc.buf, w.slice());
-        try std.testing.expectEqual(tc.buf.len, w.pos);
     }
 }
 
@@ -132,16 +131,16 @@ test "round trip" {
     var buf: [9]u8 = undefined;
     for (0..140000) |offset| {
         const value = @as(i64, @intCast(offset)) - 70000;
-        var w = ByteWriter{ .buf = &buf };
-        try IbexInt.write(&w, value);
-        try std.testing.expectEqual(w.pos, IbexInt.encodedLength(value));
+        var w = ByteWriter.Fixed.init(&buf);
+        try IbexInt.write(&w.bw, value);
+        try std.testing.expectEqual(w.slice().len, IbexInt.encodedLength(value));
         var r = ByteReader{ .buf = w.slice() };
         const got = IbexInt.read(&r);
         try std.testing.expectEqual(value, got);
     }
 }
 
-const TestCase = struct { buf: []const u8, flip: u8 = 0x00, want: i64 };
+const TestCase = struct { buf: []const u8, want: i64 };
 const test_cases = &[_]TestCase{
     // .{
     //     .buf = &.{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },

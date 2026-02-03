@@ -57,8 +57,8 @@ const IbexNumber = @import("../IbexNumber.zig").IbexNumber;
 
 test {
     var buf: [256]u8 = undefined;
-    var w = ByteWriter{ .buf = &buf };
-    try IbexNumber(u64).write(&w, std.math.maxInt(u64));
+    var w = ByteWriter.Fixed.init(&buf);
+    try IbexNumber(u64).write(&w.bw, std.math.maxInt(u64));
     var r = ByteReader{ .buf = w.slice() };
     const nb = try r.next();
     const meta: Self = try .fromReader(&r, @enumFromInt(nb));

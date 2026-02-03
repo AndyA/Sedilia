@@ -260,10 +260,10 @@ fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: TMost(TWrit
     }
     const enc = floatCodec(TWrite);
     var buf: [256]u8 = undefined;
-    var w = ByteWriter{ .buf = &buf };
-    try enc.write(&w, @floatCast(value));
+    var w = ByteWriter.Fixed.init(&buf);
+    try enc.write(&w.bw, @floatCast(value));
     // std.debug.print("{d} -> {any}\n", .{ value, w.slice() });
-    try std.testing.expectEqual(w.pos, enc.encodedLength(@floatCast(value)));
+    try std.testing.expectEqual(w.slice().len, enc.encodedLength(@floatCast(value)));
 
     const dec = floatCodec(TRead);
     var r = ByteReader{ .buf = w.slice() };
