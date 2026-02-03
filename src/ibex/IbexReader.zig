@@ -87,8 +87,7 @@ fn ObjectProxy(comptime T: type) type {
             break :blk .initComptime(kvs);
         };
 
-        pub fn lookupKey(self: *const OP, rdr: *Self) IbexError!?usize {
-            _ = self;
+        pub fn lookupKey(_: *const OP, rdr: *Self) IbexError!?usize {
             var st: StringTokeniser = .{ .r = rdr.r };
             var stok = try st.next();
 
@@ -122,8 +121,8 @@ fn ObjectProxy(comptime T: type) type {
             switch (idx) {
                 inline 0...fields.len - 1 => |i| {
                     const f = fields[i];
-                    if (f.defaultValue()) |dv|
-                        @field(self.obj, f.name) = dv
+                    if (f.defaultValue()) |*dv|
+                        @field(self.obj, f.name) = dv.*
                     else if (@typeInfo(f.type) == .optional)
                         @field(self.obj, f.name) = null
                     else
