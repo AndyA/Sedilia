@@ -113,6 +113,35 @@ test readMantissa {
     }
 }
 
+pub fn mantissaBits(r: *ByteReader) IbexError!usize {
+    var bits: usize = 0;
+    while (true) : (bits += 7) {
+        const nb = try r.next();
+        if (nb & 0x01 == 0)
+            return bits + 8 - @ctz(nb);
+    }
+}
+
+const BitsCase = struct {
+    want: usize,
+    bytes: []const u8,
+};
+
+const bits_cases = &[_]BitsCase{
+    .{ .want = 0, .bytes = &.{0x00} },
+    .{ .want = 1, .bytes = &.{0x80} },
+    .{ .want = 7, .bytes = &.{0x02} },
+    .{ .want = 14, .bytes = &.{ 0xff, 0xfe } },
+    .{ .want = 14, .bytes = &.{ 0x01, 0x02 } },
+};
+
+test mantissaBits {
+    for (bits_cases) |tc| {
+        var r = ByteReader{ .buf = tc.bytes };
+        try std.testing.expectEqual(tc.want, mantissaBits(&r));
+    }
+}
+
 pub fn skipMantissa(r: *ByteReader) IbexError!void {
     while (true) {
         const nb = try r.next();

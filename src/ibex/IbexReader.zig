@@ -10,7 +10,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 
-const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
+const number = @import("./IbexNumber.zig");
 const skipper = @import("./skipper.zig");
 
 test {
@@ -161,9 +161,48 @@ fn nextTag(self: *Self) IbexError!IbexTag {
 }
 
 fn readValueTag(self: *Self, tag: IbexTag) IbexError!Value {
-    _ = self;
-    _ = tag;
-    unreachable;
+    if (tag.isNumber()) {
+        var peeker = self.r.*;
+        const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
+        if (meta.intBits()) |_|
+            return Value{ .integer = try number.IbexNumber(i64).read(self.r) }
+        else
+            return Value{ .float = try number.IbexNumber(f64).read(self.r) };
+    }
+
+    switch (tag) {
+        .Null => return Value{ .null = {} },
+        .False => return Value{ .bool = false },
+        .True => return Value{ .bool = true },
+        .String => {
+            const str = try self.readTag([]const u8, tag);
+            return Value{ .string = str };
+        },
+        .Array => {
+            var arr: std.json.Array = .init(self.gpa);
+            errdefer arr.deinit();
+
+            var ntag = try self.nextTag();
+            while (ntag != .End) : (ntag = try self.nextTag()) {
+                try arr.append(self.readValueTag(ntag));
+            }
+            return Value{ .array = arr };
+        },
+        .Object => {
+            var obj: std.json.ObjectMap = .init(self.gpa);
+            errdefer obj.deinit();
+
+            var ntag = try self.nextTag();
+            while (ntag != .End) : (ntag = try self.nextTag()) {
+                const key = try self.readTag([]const u8, ntag);
+                const value = try self.readValueTag(try self.nextTag());
+                try obj.put(key, value);
+            }
+
+            return Value{ .object = obj };
+        },
+        else => unreachable,
+    }
 }
 
 fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
@@ -173,7 +212,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
     }
 
     switch (@typeInfo(T)) {
-        .int, .float => return IbexNumber(T).readTag(self.r, tag),
+        .int, .float => return number.IbexNumber(T).readTag(self.r, tag),
         .bool => return switch (tag) {
             .False => false,
             .True => true,

@@ -2,6 +2,10 @@ const std = @import("std");
 const intCodec = @import("./number/int.zig").intCodec;
 const floatCodec = @import("./number/float.zig").floatCodec;
 
+test {
+    std.testing.refAllDecls(@This());
+}
+
 pub fn IbexNumber(comptime T: type) type {
     return switch (@typeInfo(T)) {
         .float => floatCodec(T),
@@ -31,3 +35,5 @@ test IbexNumber {
     try testRoundTrip(u8, f32, 1.0);
     try testRoundTrip(f32, u8, 1.0);
 }
+
+pub const IbexNumberMeta = @import("./number/meta.zig");
