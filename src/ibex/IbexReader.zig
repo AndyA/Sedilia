@@ -70,6 +70,84 @@ const StringTokeniser = struct {
     }
 };
 
+fn ObjectProxy(comptime T: type) type {
+    const fields = @typeInfo(T).@"struct".fields;
+    const SetType = @Int(.unsigned, fields.len);
+
+    return struct {
+        const OP = @This();
+        seen: SetType = 0,
+        obj: T = undefined,
+
+        // TODO: why not build the index using Ibex escaped strings?
+        // Then we never have to handle escaped keys explicitly
+        const ix: std.StaticStringMap(usize) = blk: {
+            const KV = struct { []const u8, usize };
+            var kvs: [fields.len]KV = undefined;
+            for (fields, 0..) |f, i|
+                kvs[i] = .{ f.name, i };
+            break :blk .initComptime(kvs);
+        };
+
+        pub fn lookupKey(self: *const OP, rdr: *Self) IbexError!?usize {
+            _ = self;
+            var st: StringTokeniser = .{ .r = rdr.r };
+            var stok = try st.next();
+
+            if (stok.terminal)
+                return ix.get(stok.frag);
+
+            var ar: std.ArrayList(u8) = .empty;
+            defer ar.deinit(rdr.gpa);
+
+            while (true) : (stok = try st.next()) {
+                try ar.appendSlice(rdr.gpa, stok.frag);
+                if (stok.terminal)
+                    break;
+            }
+
+            return ix.get(ar.items);
+        }
+
+        pub fn read(self: *OP, rdr: *Self, idx: usize) !void {
+            switch (idx) {
+                inline 0...fields.len - 1 => |i| {
+                    self.seen |= @as(SetType, 1) << i;
+                    @field(self.obj, fields[i].name) =
+                        try rdr.read(fields[i].type);
+                },
+                else => return IbexError.UnknownKey,
+            }
+        }
+
+        pub fn default(self: *OP, idx: usize) !void {
+            switch (idx) {
+                inline 0...fields.len - 1 => |i| {
+                    const f = fields[i];
+                    if (f.defaultValue()) |dv|
+                        @field(self.obj, f.name) = dv
+                    else if (@typeInfo(f.type) == .optional)
+                        @field(self.obj, f.name) = null
+                    else
+                        return IbexError.MissingKeys;
+                },
+                else => return IbexError.UnknownKey,
+            }
+        }
+
+        pub fn cleanup(self: *OP) IbexError!T {
+            var missing = ~self.seen;
+            while (missing != 0) {
+                const next = @ctz(missing); // TODO: how does this scale?
+                try self.default(next);
+                missing = missing & (missing - 1);
+            }
+
+            return self.obj;
+        }
+    };
+}
+
 fn skipPastZero(self: *Self) IbexError!void {
     if (std.mem.findScalar(u8, self.r.tail(), 0x00)) |pos|
         return self.r.skip(pos + 1);
@@ -183,67 +261,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (@hasDecl(T, "readIbex"))
                 return T.readIbex(self);
 
-            const fields = strc.fields;
-            const SetType = @Int(.unsigned, fields.len);
-
-            const prox = comptime struct {
-                // TODO: why not build the index using Ibex escaped strings?
-                // Then we never have to handle escaped keys explicitly
-                const ix: std.StaticStringMap(usize) = blk: {
-                    const KV = struct { []const u8, usize };
-                    var kvs: [fields.len]KV = undefined;
-                    for (fields, 0..) |f, i|
-                        kvs[i] = .{ f.name, i };
-                    break :blk .initComptime(kvs);
-                };
-
-                pub fn read(s: *Self, obj: *T, idx: usize) !void {
-                    switch (idx) {
-                        inline 0...fields.len - 1 => |i| {
-                            @field(obj, fields[i].name) =
-                                try s.read(fields[i].type);
-                        },
-                        else => return IbexError.UnknownKey,
-                    }
-                }
-
-                pub fn default(obj: *T, idx: usize) !void {
-                    switch (idx) {
-                        inline 0...fields.len - 1 => |i| {
-                            const f = fields[i];
-                            if (f.defaultValue()) |dv|
-                                @field(obj, f.name) = dv
-                            else if (@typeInfo(f.type) == .optional)
-                                @field(obj, f.name) = null
-                            else
-                                return IbexError.MissingKeys;
-                        },
-                        else => return IbexError.UnknownKey,
-                    }
-                }
-
-                pub fn lookupKey(s: *Self) IbexError!?usize {
-                    var st: StringTokeniser = .{ .r = s.r };
-                    var stok = try st.next();
-
-                    if (stok.terminal)
-                        return ix.get(stok.frag);
-
-                    var ar: std.ArrayList(u8) = .empty;
-                    defer ar.deinit(s.gpa);
-
-                    while (true) : (stok = try st.next()) {
-                        try ar.appendSlice(s.gpa, stok.frag);
-                        if (stok.terminal)
-                            break;
-                    }
-
-                    return ix.get(ar.items);
-                }
-            };
-
-            var obj: T = undefined;
-            var seen: SetType = 0;
+            var prox = ObjectProxy(T){};
 
             if (strc.is_tuple) {
                 if (tag != .Array)
@@ -252,8 +270,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 var ntag = try self.nextTag();
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
-                    seen |= @as(SetType, 1) << @intCast(idx);
-                    try prox.read(self, &obj, idx);
+                    try prox.read(self, idx);
                     idx += 1;
                 }
             } else {
@@ -266,8 +283,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         return IbexError.TypeMismatch;
 
                     if (try prox.lookupKey(self)) |idx| {
-                        seen |= @as(SetType, 1) << @intCast(idx);
-                        try prox.read(self, &obj, idx);
+                        try prox.read(self, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     } else {
@@ -276,14 +292,7 @@ fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 }
             }
 
-            var missing = ~seen;
-            while (missing != 0) {
-                const next = @ctz(missing); // TODO: how does this scale?
-                try prox.default(&obj, next);
-                missing = missing & (missing - 1);
-            }
-
-            return obj;
+            return prox.cleanup();
         },
         else => @compileError("Unable to read type '" ++ @typeName(T) ++ "'"),
     }
