@@ -141,7 +141,7 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
     try writer.writeByte('"');
 }
 
-fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
+fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
         var peeker = r.lookAhead();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
@@ -179,7 +179,7 @@ fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
             try sfy.beginArray();
             var ntag = try r.nextTag();
             while (ntag != .End) : (ntag = try r.nextTag()) {
-                try ibexToJSONTag(r, ntag, sfy);
+                try ibexToJSONFromTag(r, ntag, sfy);
             }
             try sfy.endArray();
         },
@@ -192,7 +192,7 @@ fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
                 try sfy.beginObjectFieldRaw();
                 try encodeString(r, sfy.writer);
                 sfy.endObjectFieldRaw();
-                try ibexToJSONTag(r, try r.nextTag(), sfy);
+                try ibexToJSONFromTag(r, try r.nextTag(), sfy);
             }
             try sfy.endObject();
         },
@@ -205,6 +205,6 @@ pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!JSON {
     var w = std.Io.Writer.Allocating.fromArrayList(r.gpa, &buf);
     errdefer w.deinit();
     var sfy = Stringify{ .writer = &w.writer };
-    try ibexToJSONTag(r, tag, &sfy);
+    try ibexToJSONFromTag(r, tag, &sfy);
     return JSON{ .json = try w.toOwnedSlice() };
 }
