@@ -23,7 +23,7 @@ fn skipPastEnd(r: *ByteReader) IbexError!void {
     while (true) {
         const tag = try ibex.tagFromByte(try r.next());
         if (tag == .End) break;
-        try skipFromTag(r, tag);
+        try skipAfterTag(r, tag);
     }
 }
 
@@ -34,7 +34,7 @@ fn skipPastZero(r: *ByteReader) IbexError!void {
     return IbexError.SyntaxError;
 }
 
-pub fn skipFromTag(r: *ByteReader, tag: IbexTag) IbexError!void {
+pub fn skipAfterTag(r: *ByteReader, tag: IbexTag) IbexError!void {
     return switch (tag) {
         .End => IbexError.SyntaxError, // may not occur on its own
         .Null, .False, .True => {},
@@ -52,5 +52,5 @@ pub fn skipFromTag(r: *ByteReader, tag: IbexTag) IbexError!void {
 }
 
 pub fn skip(r: *ByteReader) IbexError!void {
-    try skipFromTag(r, try ibex.tagFromByte(try r.next()));
+    try skipAfterTag(r, try ibex.tagFromByte(try r.next()));
 }

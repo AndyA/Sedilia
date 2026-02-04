@@ -141,16 +141,16 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
     try writer.writeByte('"');
 }
 
-fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
+fn ibexToJSONAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
         var peeker = r.r.fork();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
         if (meta.intBits()) |bits| {
             if (bits <= 63) {
-                const n = try r.readFromTag(i64, tag);
+                const n = try r.readAfterTag(i64, tag);
                 return sfy.write(n);
             } else {
-                const n = try r.readFromTag(i128, tag);
+                const n = try r.readAfterTag(i128, tag);
                 return sfy.write(n);
             }
         } else {
@@ -158,10 +158,10 @@ fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!vo
             // more negative exponents. Doesn't affect correctness because f128 is
             // valid for those cases - just a bit slower.
             if (meta.exponent >= -1022 and meta.exponent <= 1023) {
-                const n = try r.readFromTag(f64, tag);
+                const n = try r.readAfterTag(f64, tag);
                 return sfy.write(n);
             } else {
-                const n = try r.readFromTag(f128, tag);
+                const n = try r.readAfterTag(f128, tag);
                 return sfy.write(n);
             }
         }
@@ -179,7 +179,7 @@ fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!vo
             try sfy.beginArray();
             var ntag = try r.nextTag();
             while (ntag != .End) : (ntag = try r.nextTag()) {
-                try ibexToJSONFromTag(r, ntag, sfy);
+                try ibexToJSONAfterTag(r, ntag, sfy);
             }
             try sfy.endArray();
         },
@@ -192,7 +192,7 @@ fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!vo
                 try sfy.beginObjectFieldRaw();
                 try encodeString(r, sfy.writer);
                 sfy.endObjectFieldRaw();
-                try ibexToJSONFromTag(r, try r.nextTag(), sfy);
+                try ibexToJSONAfterTag(r, try r.nextTag(), sfy);
             }
             try sfy.endObject();
         },
@@ -205,6 +205,6 @@ pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!JSON {
     var w = std.Io.Writer.Allocating.fromArrayList(r.gpa, &buf);
     errdefer w.deinit();
     var sfy = Stringify{ .writer = &w.writer };
-    try ibexToJSONFromTag(r, tag, &sfy);
+    try ibexToJSONAfterTag(r, tag, &sfy);
     return JSON{ .json = try w.toOwnedSlice() };
 }
