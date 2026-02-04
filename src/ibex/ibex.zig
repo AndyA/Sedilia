@@ -17,7 +17,7 @@ pub const IbexTag = enum(u8) {
     NumNeg = 0x08, // ~NumPos
     NumNegZero = 0x09,
     NumPosZero = 0x0a,
-    NumPos = 0x0b, // <exp: IbexInt><mant: mantissa>
+    NumPos = 0x0b, // <exp: IbexVarInt><mant: mantissa>
     NumPosInf = 0x0c,
     NumPosNaN = 0x0d,
 

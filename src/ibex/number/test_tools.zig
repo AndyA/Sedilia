@@ -5,7 +5,7 @@ const ibex = @import("../ibex.zig");
 const IbexTag = ibex.IbexTag;
 const bytes = @import("../bytes.zig");
 const ByteReader = bytes.ByteReader;
-const IbexInt = @import("../IbexInt.zig");
+const IbexVarInt = @import("../IbexVarInt.zig");
 
 pub fn exactSame(a: anytype, b: anytype) bool {
     const TA = @TypeOf(a);
@@ -59,7 +59,7 @@ pub fn checkFloat(buf: []const u8) void {
         .NumNegZero, .NumNegInf, .NumNegNaN => return,
         else => unreachable,
     }
-    _ = IbexInt.read(&r) catch unreachable;
+    _ = IbexVarInt.read(&r) catch unreachable;
     var first = true;
     while (true) : (first = false) {
         const mb = r.next() catch unreachable;

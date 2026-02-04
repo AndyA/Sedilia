@@ -2,6 +2,6 @@
 [ IbexNumber/f64                           ]        encodedLength:             84457636 / s
 [ IbexNumber/f64                           ]                write:             39864777 / s
 [ IbexNumber/f64                           ]                 read:             48223243 / s
-[ IbexInt/lengths                          ]        encodedLength:            578938140 / s
-[ IbexInt/lengths                          ]                write:            460771289 / s
-[ IbexInt/lengths                          ]                 read:            345631503 / s
+[ IbexVarInt/lengths                          ]        encodedLength:            578938140 / s
+[ IbexVarInt/lengths                          ]                write:            460771289 / s
+[ IbexVarInt/lengths                          ]                 read:            345631503 / s

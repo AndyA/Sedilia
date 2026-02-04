@@ -8,7 +8,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("../bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
-const IbexInt = @import("../IbexInt.zig");
+const IbexVarInt = @import("../IbexVarInt.zig");
 const mantissa = @import("./mantissa.zig");
 
 pub fn intCodec(comptime T: type) type {
@@ -26,17 +26,17 @@ pub fn intCodec(comptime T: type) type {
                 return 1;
             if (value < 0) {
                 if (value == min_int)
-                    return 1 + IbexInt.encodedLength(max_exp) + 1;
+                    return 1 + IbexVarInt.encodedLength(max_exp) + 1;
                 return encodedLength(-value);
             }
             const msb = info.bits - @clz(value) - 1; // drop MSB
             const byte_count = (msb - @ctz(value) + 6) / 7;
-            return 1 + IbexInt.encodedLength(msb) + @max(1, byte_count);
+            return 1 + IbexVarInt.encodedLength(msb) + @max(1, byte_count);
         }
 
         fn writeInt(w: *ByteWriter, value: T) IbexError!void {
             const msb = info.bits - @clz(value) - 1; // drop MSB
-            try IbexInt.write(w, msb); // exp
+            try IbexVarInt.write(w, msb); // exp
 
             if (msb == 0)
                 return mantissa.writeMantissa(UT, w, 0);
@@ -54,7 +54,7 @@ pub fn intCodec(comptime T: type) type {
                 defer w.negate();
                 if (value == min_int) {
                     // Special case minInt
-                    try IbexInt.write(w, max_exp);
+                    try IbexVarInt.write(w, max_exp);
                     try w.put(0x00);
                 } else {
                     try writeInt(w, -value);
@@ -74,7 +74,7 @@ pub fn intCodec(comptime T: type) type {
         }
 
         fn readPosInt(r: *ByteReader) IbexError!T {
-            const exp = try IbexInt.read(r);
+            const exp = try IbexVarInt.read(r);
             return readIntBits(r, exp);
         }
 
@@ -83,7 +83,7 @@ pub fn intCodec(comptime T: type) type {
                 return IbexError.Overflow;
             r.negate();
             defer r.negate();
-            const exp = try IbexInt.read(r);
+            const exp = try IbexVarInt.read(r);
             if (exp == max_exp) {
                 const nb = try r.next();
                 return switch (nb) {

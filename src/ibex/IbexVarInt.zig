@@ -7,7 +7,7 @@ const IbexError = ibex.IbexError;
 const ByteReader = b.ByteReader;
 const ByteWriter = b.ByteWriter;
 
-const IbexInt = @This();
+const IbexVarInt = @This();
 
 const BIAS = 0x80;
 const LINEAR_LO = 0x08;
@@ -40,7 +40,7 @@ pub fn encodedLength(value: i64) usize {
 
 test encodedLength {
     for (test_cases) |tc| {
-        try std.testing.expectEqual(tc.buf.len, IbexInt.encodedLength(tc.want));
+        try std.testing.expectEqual(tc.buf.len, IbexVarInt.encodedLength(tc.want));
     }
 }
 
@@ -60,7 +60,7 @@ pub fn skip(r: *ByteReader) !void {
 test skip {
     for (test_cases) |tc| {
         var r = ByteReader{ .buf = tc.buf };
-        try IbexInt.skip(&r);
+        try IbexVarInt.skip(&r);
         try std.testing.expectEqual(tc.buf.len, r.pos);
     }
 }
@@ -91,7 +91,7 @@ pub fn read(r: *ByteReader) IbexError!i64 {
 test read {
     for (test_cases) |tc| {
         var r = ByteReader{ .buf = tc.buf };
-        try std.testing.expectEqual(tc.want, IbexInt.read(&r));
+        try std.testing.expectEqual(tc.want, IbexVarInt.read(&r));
         try std.testing.expectEqual(tc.buf.len, r.pos);
     }
 }
@@ -123,7 +123,7 @@ test write {
         var buf: [9]u8 = undefined;
         var writer = std.Io.Writer.fixed(&buf);
         var w = ByteWriter{ .writer = &writer };
-        try IbexInt.write(&w, tc.want);
+        try IbexVarInt.write(&w, tc.want);
         try std.testing.expectEqualDeep(tc.buf, writer.buffered());
     }
 }
@@ -134,11 +134,11 @@ test "round trip" {
         const value = @as(i64, @intCast(offset)) - 70000;
         var writer = std.Io.Writer.fixed(&buf);
         var w = ByteWriter{ .writer = &writer };
-        try IbexInt.write(&w, value);
+        try IbexVarInt.write(&w, value);
         const output = writer.buffered();
-        try std.testing.expectEqual(output.len, IbexInt.encodedLength(value));
+        try std.testing.expectEqual(output.len, IbexVarInt.encodedLength(value));
         var r = ByteReader{ .buf = output };
-        const got = IbexInt.read(&r);
+        const got = IbexVarInt.read(&r);
         try std.testing.expectEqual(value, got);
     }
 }

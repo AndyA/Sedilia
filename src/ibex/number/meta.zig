@@ -9,7 +9,7 @@ const bytes = @import("../bytes.zig");
 const ByteWriter = bytes.ByteWriter;
 const ByteReader = bytes.ByteReader;
 
-const IbexInt = @import("../IbexInt.zig");
+const IbexVarInt = @import("../IbexVarInt.zig");
 const mantissa = @import("./mantissa.zig");
 
 const Self = @This();
@@ -20,7 +20,7 @@ mantissa_bits: usize = 0,
 special: bool = false,
 
 fn fromNum(r: *ByteReader, negative: bool) IbexError!Self {
-    const exp = try IbexInt.read(r);
+    const exp = try IbexVarInt.read(r);
     const mant_bits = try mantissa.mantissaBits(r);
     return Self{ .negative = negative, .exponent = exp, .mantissa_bits = mant_bits };
 }

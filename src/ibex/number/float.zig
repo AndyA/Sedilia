@@ -8,7 +8,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("../bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
-const IbexInt = @import("../IbexInt.zig");
+const IbexVarInt = @import("../IbexVarInt.zig");
 const mantissa = @import("./mantissa.zig");
 
 fn FloatBits(comptime T: type) type {
@@ -126,13 +126,13 @@ pub fn floatCodec(comptime T: type) type {
 
             const exp, const mant = massageFloat(value);
 
-            return 1 + IbexInt.encodedLength(exp - VT.exp_bias) +
+            return 1 + IbexVarInt.encodedLength(exp - VT.exp_bias) +
                 mantissa.mantissaLength(VT.TMant, mant);
         }
 
         fn writeFloat(w: *ByteWriter, value: T) IbexError!void {
             const exp, const mant = massageFloat(value);
-            try IbexInt.write(w, exp - VT.exp_bias);
+            try IbexVarInt.write(w, exp - VT.exp_bias);
             try mantissa.writeMantissa(VT.TMant, w, mant);
         }
 
@@ -161,7 +161,7 @@ pub fn floatCodec(comptime T: type) type {
         }
 
         fn readNumPos(r: *ByteReader) IbexError!T {
-            var exp = try IbexInt.read(r) + VT.exp_bias;
+            var exp = try IbexVarInt.read(r) + VT.exp_bias;
             // std.debug.print("exp={d}, max={d}\n", .{ exp, math.maxInt(VT.TExp) });
             if (exp >= math.maxInt(VT.TExp))
                 return IbexError.Overflow;

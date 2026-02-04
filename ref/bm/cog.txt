@@ -2,9 +2,9 @@
 [ IbexNumber/f64                           ]        encodedLength:            118182821 / s
 [ IbexNumber/f64                           ]                write:             46397670 / s
 [ IbexNumber/f64                           ]                 read:             55100910 / s
-[ IbexInt/lengths                          ]        encodedLength:            964222923 / s
-[ IbexInt/lengths                          ]                write:            685410804 / s
-[ IbexInt/lengths                          ]                 read:            449845930 / s
+[ IbexVarInt/lengths                          ]        encodedLength:            964222923 / s
+[ IbexVarInt/lengths                          ]                write:            685410804 / s
+[ IbexVarInt/lengths                          ]                 read:            449845930 / s
 [ Rocks/Batch/Write                        ]   10000/   10/   100:               649475 / s
 [ Rocks/Batch/Write                        ]   10000/   10/ 10000:                47492 / s
 [ Rocks/Batch/Write                        ]   10000/   10/ 20000:                18468 / s
@@ -33,9 +33,9 @@
 [ IbexNumber/f64                           ]                  encodedLength:            118347164 / s
 [ IbexNumber/f64                           ]                          write:             46468589 / s
 [ IbexNumber/f64                           ]                           read:             55179168 / s
-[ IbexInt/lengths                          ]                  encodedLength:            967090089 / s
-[ IbexInt/lengths                          ]                          write:            685485548 / s
-[ IbexInt/lengths                          ]                           read:            450066732 / s
+[ IbexVarInt/lengths                          ]                  encodedLength:            967090089 / s
+[ IbexVarInt/lengths                          ]                          write:            685485548 / s
+[ IbexVarInt/lengths                          ]                           read:            450066732 / s
 [ Rocks/Batch/Write                        ]            10000/     100/1000:               910942 / s
 [ Rocks/Batch/Write                        ]            10000/   10000/1000:                37937 / s
 [ Rocks/Batch/Write                        ]            10000/   20000/1000:                17623 / s
