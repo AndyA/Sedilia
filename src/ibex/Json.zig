@@ -317,7 +317,9 @@ pub fn jsonToJson(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) Ibex
     try cleaner.transform();
 }
 
-pub const jsonToJsonAllocating = allocatingTransform(jsonToJson);
+pub fn jsonToJsonAllocating(gpa: Allocator, json: []const u8) IbexError![]const u8 {
+    return try allocatingTransform(jsonToJson)(gpa, json);
+}
 
 const TestCase = struct { input: []const u8, want: []const u8 };
 
@@ -354,6 +356,10 @@ pub fn jsonToIbex(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) Ibex
     try jw.write(json);
 }
 
+pub fn jsonToIbexAllocating(gpa: Allocator, json: []const u8) IbexError![]const u8 {
+    return try allocatingTransform(jsonToIbex)(gpa, json);
+}
+
 test jsonToIbex {
     const gpa = std.testing.allocator;
 
@@ -371,8 +377,6 @@ test jsonToIbex {
     try testTransform(gpa, jsonToIbexAllocating, cases);
 }
 
-pub const jsonToIbexAllocating = allocatingTransform(jsonToIbex);
-
 pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
@@ -382,7 +386,9 @@ pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) Ibex
     try ibexToJsonAfterTag(&ir, try ir.nextTag(), &sfy);
 }
 
-pub const ibexToJsonAllocating = allocatingTransform(ibexToJson);
+pub fn ibexToJsonAllocating(gpa: Allocator, ibex: []const u8) IbexError![]const u8 {
+    return try allocatingTransform(ibexToJson)(gpa, ibex);
+}
 
 test ibexToJson {
     const gpa = std.testing.allocator;
