@@ -285,6 +285,8 @@ const JSONCleaner = struct {
                 else => unreachable,
             }
         }
+
+        assert(self.state == .INIT);
     }
 };
 
