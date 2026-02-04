@@ -119,27 +119,16 @@ fn ObjectProxy(comptime T: type) type {
             }
         }
 
-        pub fn defaultField(self: *OP, idx: usize) !void {
-            switch (idx) {
-                inline 0...fields.len - 1 => |i| {
-                    const f = fields[i];
+        pub fn cleanup(self: *OP) IbexError!T {
+            inline for (fields, 0..) |f, i| {
+                if ((self.seen & @as(SetType, 1) << i) == 0) {
                     if (f.defaultValue()) |*dv|
                         @field(self.obj, f.name) = dv.*
                     else if (@typeInfo(f.type) == .optional)
                         @field(self.obj, f.name) = null
                     else
                         return IbexError.MissingKeys;
-                },
-                else => return IbexError.UnknownKey,
-            }
-        }
-
-        pub fn cleanup(self: *OP) IbexError!T {
-            var missing = ~self.seen;
-            while (missing != 0) {
-                const next = @ctz(missing); // TODO: how does this scale?
-                try self.defaultField(next);
-                missing = missing & (missing - 1);
+                }
             }
 
             return self.obj;
