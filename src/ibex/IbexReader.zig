@@ -179,7 +179,7 @@ fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
         .False => return Value{ .bool = false },
         .True => return Value{ .bool = true },
         .String => {
-            const str = try self.readTag([]const u8, tag);
+            const str = try self.readFromTag([]const u8, tag);
             return Value{ .string = str };
         },
         .Array => {
@@ -198,7 +198,7 @@ fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
 
             var ntag = try self.nextTag();
             while (ntag != .End) : (ntag = try self.nextTag()) {
-                const key = try self.readTag([]const u8, ntag);
+                const key = try self.readFromTag([]const u8, ntag);
                 const value = try self.readValue(try self.nextTag());
                 try obj.put(key, value);
             }
@@ -213,14 +213,14 @@ pub fn stringTokeniser(self: *Self) StringTokeniser {
     return .{ .r = self.r };
 }
 
-pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
+pub fn readFromTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
     switch (T) {
         Value => return self.readValue(tag),
         else => {},
     }
 
     switch (@typeInfo(T)) {
-        .int, .float => return number.IbexNumber(T).readTag(self.r, tag),
+        .int, .float => return number.IbexNumber(T).readFromTag(self.r, tag),
         .bool => return switch (tag) {
             .False => false,
             .True => true,
@@ -229,7 +229,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
         .optional => |o| {
             return switch (tag) {
                 .Null => null,
-                else => try self.readTag(o.child, tag),
+                else => try self.readFromTag(o.child, tag),
             };
         },
         .array => |arr| {
@@ -241,7 +241,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             while (ntag != .End) : (ntag = try self.nextTag()) {
                 if (idx == arr.len)
                     return IbexError.ArraySizeMismatch;
-                buf[idx] = try self.readTag(arr.child, ntag);
+                buf[idx] = try self.readFromTag(arr.child, ntag);
                 idx += 1;
             }
 
@@ -255,7 +255,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             return buf;
         },
         .vector => |vec| {
-            return @as(T, try self.readTag([vec.len]vec.child, tag));
+            return @as(T, try self.readFromTag([vec.len]vec.child, tag));
         },
         .pointer => |ptr| {
             const CT = ptr.child;
@@ -264,7 +264,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 .one => {
                     const v: *CT = try self.gpa.create(CT);
                     errdefer self.gpa.destroy(v);
-                    v.* = try self.readTag(CT, tag);
+                    v.* = try self.readFromTag(CT, tag);
                     return v;
                 },
                 .many, .slice => {
@@ -285,7 +285,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         .Array => {
                             var ntag = try self.nextTag();
                             while (ntag != .End) : (ntag = try self.nextTag()) {
-                                try ar.append(self.gpa, try self.readTag(CT, ntag));
+                                try ar.append(self.gpa, try self.readFromTag(CT, ntag));
                             }
                         },
                         else => return IbexError.TypeMismatch,
@@ -344,7 +344,7 @@ pub fn readTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
 }
 
 pub fn read(self: *Self, comptime T: type) IbexError!T {
-    return self.readTag(T, try self.nextTag());
+    return self.readFromTag(T, try self.nextTag());
 }
 
 fn testRead(gpa: Allocator, msg: []const u8, comptime T: type, expect: T) !void {

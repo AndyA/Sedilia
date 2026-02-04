@@ -94,7 +94,7 @@ pub fn intCodec(comptime T: type) type {
             return -try readIntBits(r, exp);
         }
 
-        pub fn readTag(r: *ByteReader, tag: IbexTag) IbexError!T {
+        pub fn readFromTag(r: *ByteReader, tag: IbexTag) IbexError!T {
             return switch (tag) {
                 .NumPosZero, .NumNegZero => 0,
                 .NumPos => readPosInt(r),
@@ -107,7 +107,7 @@ pub fn intCodec(comptime T: type) type {
 
         pub fn read(r: *ByteReader) IbexError!T {
             const nb = try r.next();
-            return readTag(r, @enumFromInt(nb));
+            return readFromTag(r, @enumFromInt(nb));
         }
     };
 }

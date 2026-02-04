@@ -147,10 +147,10 @@ fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
         if (meta.intBits()) |bits| {
             if (bits <= 63) {
-                const n = try r.readTag(i64, tag);
+                const n = try r.readFromTag(i64, tag);
                 return sfy.write(n);
             } else {
-                const n = try r.readTag(i128, tag);
+                const n = try r.readFromTag(i128, tag);
                 return sfy.write(n);
             }
         } else {
@@ -158,10 +158,10 @@ fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
             // more negative exponents. Doesn't affect correctness because f128 is
             // valid for those cases - just a bit slower.
             if (meta.exponent >= -1022 and meta.exponent <= 1023) {
-                const n = try r.readTag(f64, tag);
+                const n = try r.readFromTag(f64, tag);
                 return sfy.write(n);
             } else {
-                const n = try r.readTag(f128, tag);
+                const n = try r.readFromTag(f128, tag);
                 return sfy.write(n);
             }
         }
