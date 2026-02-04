@@ -41,6 +41,7 @@ const JSONWriter = struct {
     }
 
     fn writeNumber(w: *IbexWriter, num: []const u8) IbexError!void {
+        // TODO it may be quicker just to always use f128?
         if (!isNumberFormattedLikeAnInteger(num)) {
             const f = std.fmt.parseFloat(f64, num) catch unreachable;
             if (std.math.isFinite(f)) return w.write(f);
