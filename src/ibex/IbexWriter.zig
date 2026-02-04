@@ -146,8 +146,8 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
             }
         },
         .@"struct" => |strc| {
-            if (@hasDecl(T, "writeIbex"))
-                return v.writeIbex(self);
+            if (@hasDecl(T, "writeToIbex"))
+                return v.writeToIbex(self);
 
             if (strc.is_tuple) {
                 try self.beginArray();
@@ -229,7 +229,7 @@ test "Value" {
     try testWrite(Value{ .string = "Hello" }, .{t(.String)} ++ "Hello" ++ .{t(.End)});
 }
 
-test "writeIbex hook" {
+test "writeToIbex hook" {
     try testWrite(Literal{ .ibex = &.{t(.Null)} }, &.{t(.Null)});
     try testWrite(
         .{ .name = "Andy", .rate = Literal{ .ibex = &.{ t(.NumPos), 0x80, 0x80 } } },
@@ -240,7 +240,7 @@ test "writeIbex hook" {
     );
 }
 
-test "writeIbex Json" {
+test "writeToIbex Json" {
     try testWrite(
         Json{ .json =
         \\{ "name": "Andy", "checked": false, "rate": 1.5}

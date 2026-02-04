@@ -293,8 +293,8 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             }
         },
         .@"struct" => |strc| {
-            if (@hasDecl(T, "readIbex"))
-                return T.readIbex(self, tag);
+            if (@hasDecl(T, "readFromIbex"))
+                return T.readFromIbex(self, tag);
 
             var prox = ObjectProxy(T){};
 
@@ -459,7 +459,7 @@ test {
     );
 }
 
-test "readIbex Json" {
+test "readFromIbex Json" {
     const Json = @import("./Json.zig");
     const gpa = std.testing.allocator;
 

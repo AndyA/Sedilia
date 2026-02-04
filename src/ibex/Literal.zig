@@ -9,11 +9,11 @@ const Self = @This();
 
 ibex: []const u8,
 
-pub fn writeIbex(self: *const Self, w: *IbexWriter) IbexError!void {
+pub fn writeToIbex(self: *const Self, w: *IbexWriter) IbexError!void {
     try w.writeBytes(self.ibex);
 }
 
-pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!Self {
+pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Self {
     const before = r.r.pos - 1; // adjust for tag
     try skipper.skipAfterTag(r, tag);
     return Self{ .ibex = r.gpa.dupe(u8, r.r.buf[before..r.r.pos]) };

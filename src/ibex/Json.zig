@@ -123,7 +123,7 @@ const JsonWriter = struct {
     }
 };
 
-pub fn writeIbex(self: *const Json, w: *IbexWriter) IbexError!void {
+pub fn writeToIbex(self: *const Json, w: *IbexWriter) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     var writer = JsonWriter{ .gpa = arena.allocator(), .w = w };
@@ -200,7 +200,7 @@ fn ibexToJsonAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!v
     }
 }
 
-pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!Json {
+pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Json {
     var buf: std.ArrayListUnmanaged(u8) = .empty;
     var w = std.Io.Writer.Allocating.fromArrayList(r.gpa, &buf);
     errdefer w.deinit();
