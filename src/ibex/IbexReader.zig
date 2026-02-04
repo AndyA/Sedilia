@@ -120,6 +120,9 @@ fn ObjectProxy(comptime T: type) type {
         }
 
         pub fn cleanup(self: *OP) IbexError!T {
+            if (~self.seen == 0)
+                return self.obj;
+
             inline for (fields, 0..) |f, i| {
                 if ((self.seen & @as(SetType, 1) << i) == 0) {
                     if (f.defaultValue()) |*dv|
