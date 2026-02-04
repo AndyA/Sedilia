@@ -160,13 +160,9 @@ pub fn nextTag(self: *Self) IbexError!IbexTag {
     }
 }
 
-pub fn lookAhead(self: *Self) ByteReader {
-    return ByteReader{ .buf = self.r.tail(), .flip = self.r.flip };
-}
-
 fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
     if (tag.isNumber()) {
-        var peeker = self.lookAhead();
+        var peeker = self.r.fork();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
         if (meta.intBits()) |_|
             return Value{ .integer = try number.IbexNumber(i64).read(self.r) }

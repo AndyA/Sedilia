@@ -143,7 +143,7 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
 
 fn ibexToJSONFromTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
-        var peeker = r.lookAhead();
+        var peeker = r.r.fork();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
         if (meta.intBits()) |bits| {
             if (bits <= 63) {

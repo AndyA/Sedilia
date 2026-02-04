@@ -10,6 +10,10 @@ pub const ByteReader = struct {
     flip: u8 = 0x00,
     pos: usize = 0,
 
+    pub fn fork(self: *const Self) Self {
+        return Self{ .buf = self.tail(), .flip = self.flip };
+    }
+
     pub fn eof(self: *const Self) bool {
         assert(self.pos <= self.buf.len);
         return self.pos == self.buf.len;
