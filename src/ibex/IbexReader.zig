@@ -108,7 +108,7 @@ fn ObjectProxy(comptime T: type) type {
             return ix.get(ar.items);
         }
 
-        pub fn read(self: *OP, rdr: *Self, idx: usize) !void {
+        pub fn readField(self: *OP, rdr: *Self, idx: usize) !void {
             switch (idx) {
                 inline 0...fields.len - 1 => |i| {
                     self.seen |= @as(SetType, 1) << i;
@@ -119,7 +119,7 @@ fn ObjectProxy(comptime T: type) type {
             }
         }
 
-        pub fn default(self: *OP, idx: usize) !void {
+        pub fn defaultField(self: *OP, idx: usize) !void {
             switch (idx) {
                 inline 0...fields.len - 1 => |i| {
                     const f = fields[i];
@@ -138,7 +138,7 @@ fn ObjectProxy(comptime T: type) type {
             var missing = ~self.seen;
             while (missing != 0) {
                 const next = @ctz(missing); // TODO: how does this scale?
-                try self.default(next);
+                try self.defaultField(next);
                 missing = missing & (missing - 1);
             }
 
@@ -313,7 +313,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                 var ntag = try self.nextTag();
                 var idx: usize = 0;
                 while (ntag != .End) : (ntag = try self.nextTag()) {
-                    try prox.read(self, idx);
+                    try prox.readField(self, idx);
                     idx += 1;
                 }
             } else {
@@ -326,7 +326,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                         return IbexError.TypeMismatch;
 
                     if (try prox.lookupKey(self)) |idx| {
-                        try prox.read(self, idx);
+                        try prox.readField(self, idx);
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     } else {
