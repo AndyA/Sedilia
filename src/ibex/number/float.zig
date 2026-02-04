@@ -8,7 +8,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("../bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
-const IbexVarInt = @import("../IbexVarInt.zig");
+const IbexVarInt = @import("./IbexVarInt.zig");
 const mantissa = @import("./mantissa.zig");
 
 fn FloatBits(comptime T: type) type {

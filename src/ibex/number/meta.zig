@@ -9,7 +9,7 @@ const bytes = @import("../bytes.zig");
 const ByteWriter = bytes.ByteWriter;
 const ByteReader = bytes.ByteReader;
 
-const IbexVarInt = @import("../IbexVarInt.zig");
+const IbexVarInt = @import("./IbexVarInt.zig");
 const mantissa = @import("./mantissa.zig");
 
 const Self = @This();
@@ -53,7 +53,7 @@ pub fn intBits(self: *const Self) ?usize {
     return @intCast(self.exponent + 1);
 }
 
-const IbexNumber = @import("../IbexNumber.zig").IbexNumber;
+const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
 
 test {
     var buf: [256]u8 = undefined;

@@ -1,6 +1,6 @@
 const std = @import("std");
-const intCodec = @import("./number/int.zig").intCodec;
-const floatCodec = @import("./number/float.zig").floatCodec;
+const intCodec = @import("./int.zig").intCodec;
+const floatCodec = @import("./float.zig").floatCodec;
 
 test {
     std.testing.refAllDecls(@This());
@@ -15,7 +15,7 @@ pub fn IbexNumber(comptime T: type) type {
 }
 
 fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: comptime_float) !void {
-    const bytes = @import("./bytes.zig");
+    const bytes = @import("../bytes.zig");
 
     var buf: [256]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);
@@ -37,4 +37,4 @@ test IbexNumber {
     try testRoundTrip(f32, u8, 1.0);
 }
 
-pub const IbexNumberMeta = @import("./number/meta.zig");
+pub const IbexNumberMeta = @import("./meta.zig");

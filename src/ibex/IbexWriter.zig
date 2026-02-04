@@ -9,7 +9,7 @@ const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const Literal = @import("./Literal.zig");
-const IbexNumber = @import("./IbexNumber.zig").IbexNumber;
+const IbexNumber = @import("./number/IbexNumber.zig").IbexNumber;
 const JSON = @import("./JSON.zig");
 
 test {

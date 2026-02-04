@@ -10,7 +10,7 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
 
-const number = @import("./IbexNumber.zig");
+const number = @import("./number/IbexNumber.zig");
 const skipper = @import("./skipper.zig");
 
 test {

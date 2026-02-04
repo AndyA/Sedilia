@@ -1,8 +1,8 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
-const ibex = @import("./ibex.zig");
-const b = @import("./bytes.zig");
+const ibex = @import("../ibex.zig");
+const b = @import("../bytes.zig");
 const IbexError = ibex.IbexError;
 const ByteReader = b.ByteReader;
 const ByteWriter = b.ByteWriter;

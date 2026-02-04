@@ -5,7 +5,7 @@ const ibex = @import("../ibex.zig");
 const IbexTag = ibex.IbexTag;
 const bytes = @import("../bytes.zig");
 const ByteReader = bytes.ByteReader;
-const IbexVarInt = @import("../IbexVarInt.zig");
+const IbexVarInt = @import("./IbexVarInt.zig");
 
 pub fn exactSame(a: anytype, b: anytype) bool {
     const TA = @TypeOf(a);

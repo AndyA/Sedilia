@@ -7,7 +7,7 @@ const Allocator = std.mem.Allocator;
 const ibex = @import("./ibex.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
-const number = @import("./IbexNumber.zig");
+const number = @import("./number/IbexNumber.zig");
 
 const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
