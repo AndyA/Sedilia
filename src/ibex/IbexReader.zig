@@ -27,17 +27,17 @@ r: *ByteReader,
 gpa: Allocator,
 opt: Options = .{},
 
-pub const StringToken = struct {
-    frag: []const u8,
-    terminal: bool = false,
-};
-
 pub const StringTokeniser = struct {
     const ST = @This();
     r: *ByteReader,
     state: enum { INIT, ESCAPE, DONE } = .INIT,
 
-    pub fn next(self: *ST) IbexError!StringToken {
+    pub const Token = struct {
+        frag: []const u8,
+        terminal: bool = false,
+    };
+
+    pub fn next(self: *ST) IbexError!Token {
         const tail = self.r.tail();
         switch (self.state) {
             .INIT => {
