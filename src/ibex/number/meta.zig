@@ -1,11 +1,11 @@
 const std = @import("std");
 const print = std.debug.print;
 
-const ibex = @import("../ibex.zig");
+const ibex = @import("../support/types.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
 
-const bytes = @import("../bytes.zig");
+const bytes = @import("../support/bytes.zig");
 const ByteWriter = bytes.ByteWriter;
 const ByteReader = bytes.ByteReader;
 

@@ -3,15 +3,15 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const Value = std.json.Value;
 
-const ibex = @import("./ibex.zig");
+const ibex = @import("./support/types.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
 
-const bytes = @import("./bytes.zig");
+const bytes = @import("./support/bytes.zig");
 const ByteReader = bytes.ByteReader;
 
 const number = @import("./number/IbexNumber.zig");
-const skipper = @import("./skipper.zig");
+const skipper = @import("./support/skipper.zig");
 
 test {
     std.testing.refAllDecls(@This());

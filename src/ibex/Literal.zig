@@ -1,9 +1,9 @@
-const ibx = @import("./ibex.zig");
+const ibx = @import("./support/types.zig");
 const IbexTag = ibx.IbexTag;
 const IbexError = ibx.IbexError;
 const IbexWriter = @import("./IbexWriter.zig");
 const IbexReader = @import("./IbexReader.zig");
-const skipper = @import("./skipper.zig");
+const skipper = @import("./support/skipper.zig");
 
 const Self = @This();
 

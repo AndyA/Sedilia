@@ -2,10 +2,10 @@ const std = @import("std");
 const print = std.debug.print;
 const Value = std.json.Value;
 
-const ibex = @import("./ibex.zig");
+const ibex = @import("./support/types.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
-const bytes = @import("./bytes.zig");
+const bytes = @import("./support/bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const Literal = @import("./Literal.zig");
@@ -186,7 +186,7 @@ fn testWrite(value: anytype, expect: []const u8) !void {
     try std.testing.expectEqualDeep(expect, output);
 
     // Make sure we can skip it correctly
-    const skip = @import("./skipper.zig").skip;
+    const skip = @import("./support/skipper.zig").skip;
     var br = ByteReader{ .buf = output };
     try skip(&br);
     try std.testing.expectEqual(expect.len, br.pos);

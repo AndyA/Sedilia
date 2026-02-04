@@ -2,9 +2,9 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 
-const ibex = @import("../ibex.zig");
+const ibex = @import("../support/types.zig");
 const IbexError = ibex.IbexError;
-const bytes = @import("../bytes.zig");
+const bytes = @import("../support/bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 

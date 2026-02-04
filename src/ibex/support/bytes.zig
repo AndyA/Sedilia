@@ -1,6 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const ibex = @import("./ibex.zig");
+const ibex = @import("./types.zig");
 
 const IbexError = ibex.IbexError;
 

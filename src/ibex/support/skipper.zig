@@ -1,12 +1,12 @@
 const std = @import("std");
 
-const ibex = @import("./ibex.zig");
+const ibex = @import("./types.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
 const bytes = @import("./bytes.zig");
 const ByteReader = bytes.ByteReader;
-const IbexVarInt = @import("./number/IbexVarInt.zig");
-const mantissa = @import("./number/mantissa.zig");
+const IbexVarInt = @import("../number/IbexVarInt.zig");
+const mantissa = @import("../number/mantissa.zig");
 
 fn skipNumPos(r: *ByteReader) IbexError!void {
     try IbexVarInt.skip(r);

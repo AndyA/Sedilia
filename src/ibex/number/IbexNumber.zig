@@ -15,7 +15,7 @@ pub fn IbexNumber(comptime T: type) type {
 }
 
 fn testRoundTrip(comptime TWrite: type, comptime TRead: type, value: comptime_float) !void {
-    const bytes = @import("../bytes.zig");
+    const bytes = @import("../support/bytes.zig");
 
     var buf: [256]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);

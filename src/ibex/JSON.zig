@@ -4,7 +4,7 @@ const assert = std.debug.assert;
 const Stringify = std.json.Stringify;
 const Allocator = std.mem.Allocator;
 
-const ibex = @import("./ibex.zig");
+const ibex = @import("./support/types.zig");
 const IbexTag = ibex.IbexTag;
 const IbexError = ibex.IbexError;
 const number = @import("./number/IbexNumber.zig");

@@ -3,7 +3,7 @@ const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 const Timer = std.time.Timer;
 
-const bytes = @import("../ibex/bytes.zig");
+const bytes = @import("../ibex/support/bytes.zig");
 const ByteWriter = bytes.ByteWriter;
 const ByteReader = bytes.ByteReader;
 
