@@ -293,12 +293,12 @@ const JSONCleaner = struct {
 const WritingTransform = fn (Allocator, []const u8, *std.Io.Writer) IbexError!void;
 const AllocatingTransform = fn (Allocator, []const u8) IbexError![]const u8;
 
-fn allocatingTransform(comptime wt: WritingTransform) AllocatingTransform {
+fn allocatingTransform(comptime trans_fn: WritingTransform) AllocatingTransform {
     const shim = struct {
         pub fn transform(gpa: Allocator, data: []const u8) IbexError![]const u8 {
             var writer = std.Io.Writer.Allocating.init(gpa);
             errdefer writer.deinit();
-            try wt(gpa, data, &writer.writer);
+            try trans_fn(gpa, data, &writer.writer);
             return try writer.toOwnedSlice();
         }
     };
