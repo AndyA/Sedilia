@@ -143,7 +143,7 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
 
 fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
-        var peeker = r.r.*;
+        var peeker = r.lookAhead();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
         if (meta.intBits()) |bits| {
             if (bits <= 63) {
@@ -154,6 +154,9 @@ fn ibexToJSONTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
                 return sfy.write(n);
             }
         } else {
+            // TODO this test is wrong - because Ibex handles subnormal values using
+            // more negative exponents. Doesn't affect correctness because f128 is
+            // valid for those cases - just a bit slower.
             if (meta.exponent >= -1022 and meta.exponent <= 1023) {
                 const n = try r.readTag(f64, tag);
                 return sfy.write(n);
