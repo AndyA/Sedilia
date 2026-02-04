@@ -35,7 +35,7 @@ pub const StringToken = struct {
 pub const StringTokeniser = struct {
     const ST = @This();
     r: *ByteReader,
-    state: enum { INIT, ESCAPE } = .INIT,
+    state: enum { INIT, ESCAPE, DONE } = .INIT,
 
     pub fn next(self: *ST) IbexError!StringToken {
         const tail = self.r.tail();
@@ -45,6 +45,7 @@ pub const StringTokeniser = struct {
                     try self.r.skip(esc + 1);
                     switch (tail[esc]) {
                         0x00 => {
+                            self.state = .DONE;
                             return .{ .frag = tail[0..esc], .terminal = true };
                         },
                         0x01 => {
@@ -66,6 +67,7 @@ pub const StringTokeniser = struct {
                     else => IbexError.SyntaxError,
                 };
             },
+            .DONE => unreachable,
         }
     }
 };
