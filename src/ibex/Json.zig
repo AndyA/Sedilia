@@ -13,11 +13,11 @@ const number = @import("./number/IbexNumber.zig");
 const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
 
-const JSON = @This();
+const Json = @This();
 
 json: []const u8,
 
-const JSONWriter = struct {
+const JsonWriter = struct {
     const Self = @This();
 
     gpa: Allocator,
@@ -123,10 +123,10 @@ const JSONWriter = struct {
     }
 };
 
-pub fn writeIbex(self: *const JSON, w: *IbexWriter) IbexError!void {
+pub fn writeIbex(self: *const Json, w: *IbexWriter) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-    var writer = JSONWriter{ .gpa = arena.allocator(), .w = w };
+    var writer = JsonWriter{ .gpa = arena.allocator(), .w = w };
     try writer.write(self.json);
 }
 
@@ -141,7 +141,7 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
     try writer.writeByte('"');
 }
 
-fn ibexToJSONAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
+fn ibexToJsonAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
         var peeker = r.r.fork();
         const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
@@ -179,7 +179,7 @@ fn ibexToJSONAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!v
             try sfy.beginArray();
             var ntag = try r.nextTag();
             while (ntag != .End) : (ntag = try r.nextTag()) {
-                try ibexToJSONAfterTag(r, ntag, sfy);
+                try ibexToJsonAfterTag(r, ntag, sfy);
             }
             try sfy.endArray();
         },
@@ -192,7 +192,7 @@ fn ibexToJSONAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!v
                 try sfy.beginObjectFieldRaw();
                 try encodeString(r, sfy.writer);
                 sfy.endObjectFieldRaw();
-                try ibexToJSONAfterTag(r, try r.nextTag(), sfy);
+                try ibexToJsonAfterTag(r, try r.nextTag(), sfy);
             }
             try sfy.endObject();
         },
@@ -200,20 +200,20 @@ fn ibexToJSONAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!v
     }
 }
 
-pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!JSON {
+pub fn readIbex(r: *IbexReader, tag: IbexTag) IbexError!Json {
     var buf: std.ArrayListUnmanaged(u8) = .empty;
     var w = std.Io.Writer.Allocating.fromArrayList(r.gpa, &buf);
     errdefer w.deinit();
     var sfy = Stringify{ .writer = &w.writer };
-    try ibexToJSONAfterTag(r, tag, &sfy);
-    return JSON{ .json = try w.toOwnedSlice() };
+    try ibexToJsonAfterTag(r, tag, &sfy);
+    return Json{ .json = try w.toOwnedSlice() };
 }
 
 // Useful transformations
 
 const bytes = @import("./support/bytes.zig");
 
-const JSONCleaner = struct {
+const JsonCleaner = struct {
     const Self = @This();
     scanner: *Scanner,
     stringify: *Stringify,
@@ -305,19 +305,19 @@ fn allocatingTransform(comptime trans_fn: WritingTransform) AllocatingTransform 
     return shim.transform;
 }
 
-/// Validate and minify JSON
-pub fn jsonToJSON(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) IbexError!void {
+/// Validate and minify Json
+pub fn jsonToJson(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
 
     var scanner: Scanner = .initCompleteInput(arena.allocator(), json);
     defer scanner.deinit();
     var stringify = Stringify{ .writer = writer };
-    var cleaner = JSONCleaner{ .scanner = &scanner, .stringify = &stringify };
+    var cleaner = JsonCleaner{ .scanner = &scanner, .stringify = &stringify };
     try cleaner.transform();
 }
 
-pub const jsonToJSONAllocating = allocatingTransform(jsonToJSON);
+pub const jsonToJsonAllocating = allocatingTransform(jsonToJson);
 
 const TestCase = struct { input: []const u8, want: []const u8 };
 
@@ -334,7 +334,7 @@ fn t(tag: IbexTag) u8 {
     return @intFromEnum(tag);
 }
 
-test jsonToJSON {
+test jsonToJson {
     const gpa = std.testing.allocator;
 
     const cases = &[_]TestCase{
@@ -342,7 +342,7 @@ test jsonToJSON {
         .{ .input = "[1, false, \"Hello\"]", .want = "[1,false,\"Hello\"]" },
     };
 
-    try testTransform(gpa, jsonToJSONAllocating, cases);
+    try testTransform(gpa, jsonToJsonAllocating, cases);
 }
 
 pub fn jsonToIbex(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) IbexError!void {
@@ -350,7 +350,7 @@ pub fn jsonToIbex(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) Ibex
     defer arena.deinit();
     var bw = bytes.ByteWriter{ .writer = writer };
     var iw = IbexWriter{ .w = &bw };
-    var jw = JSONWriter{ .gpa = arena.allocator(), .w = &iw };
+    var jw = JsonWriter{ .gpa = arena.allocator(), .w = &iw };
     try jw.write(json);
 }
 
@@ -373,18 +373,18 @@ test jsonToIbex {
 
 pub const jsonToIbexAllocating = allocatingTransform(jsonToIbex);
 
-pub fn ibexToJSON(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
+pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
     var br = bytes.ByteReader{ .buf = ibex };
     var ir = IbexReader{ .gpa = arena.allocator(), .r = &br };
     var sfy = Stringify{ .writer = writer };
-    try ibexToJSONAfterTag(&ir, try ir.nextTag(), &sfy);
+    try ibexToJsonAfterTag(&ir, try ir.nextTag(), &sfy);
 }
 
-pub const ibexToJSONAllocating = allocatingTransform(ibexToJSON);
+pub const ibexToJsonAllocating = allocatingTransform(ibexToJson);
 
-test ibexToJSON {
+test ibexToJson {
     const gpa = std.testing.allocator;
 
     const cases = &[_]TestCase{.{
@@ -398,5 +398,5 @@ test ibexToJSON {
         ,
     }};
 
-    try testTransform(gpa, ibexToJSONAllocating, cases);
+    try testTransform(gpa, ibexToJsonAllocating, cases);
 }

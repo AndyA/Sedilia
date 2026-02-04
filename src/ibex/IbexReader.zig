@@ -459,12 +459,12 @@ test {
     );
 }
 
-test "readIbex JSON" {
-    const JSON = @import("./JSON.zig");
+test "readIbex Json" {
+    const Json = @import("./Json.zig");
     const gpa = std.testing.allocator;
 
-    try testRead(gpa, &.{t(.Null)}, JSON, .{ .json = "null" });
-    try testRead(gpa, &.{ t(.NumPos), 0x80, 0x00 }, JSON, .{ .json = "1" });
+    try testRead(gpa, &.{t(.Null)}, Json, .{ .json = "null" });
+    try testRead(gpa, &.{ t(.NumPos), 0x80, 0x00 }, Json, .{ .json = "1" });
 
     try testRead(
         gpa,
@@ -478,7 +478,7 @@ test "readIbex JSON" {
             "" ++ .{t(.String)} ++ "perl" ++ .{t(.End)} ++
             "" ++ .{t(.End)} ++
             .{t(.End)},
-        JSON,
+        Json,
         .{ .json =
         \\{"name":"Andy","checked":false,"tags":["zig","c","perl"]}
     },

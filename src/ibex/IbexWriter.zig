@@ -10,7 +10,7 @@ const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
 const Literal = @import("./Literal.zig");
 const IbexNumber = @import("./number/IbexNumber.zig").IbexNumber;
-const JSON = @import("./JSON.zig");
+const Json = @import("./Json.zig");
 
 test {
     std.testing.refAllDecls(@This());
@@ -89,8 +89,8 @@ pub fn writeValue(self: *Self, v: Value) IbexError!void {
     }
 }
 
-pub fn writeJSON(self: *Self, json: []const u8) IbexError!void {
-    try self.write(JSON{ .json = json });
+pub fn writeJson(self: *Self, json: []const u8) IbexError!void {
+    try self.write(Json{ .json = json });
 }
 
 pub fn write(self: *Self, v: anytype) IbexError!void {
@@ -240,9 +240,9 @@ test "writeIbex hook" {
     );
 }
 
-test "writeIbex JSON" {
+test "writeIbex Json" {
     try testWrite(
-        JSON{ .json =
+        Json{ .json =
         \\{ "name": "Andy", "checked": false, "rate": 1.5}
     },
         .{t(.Object)} ++
@@ -252,7 +252,7 @@ test "writeIbex JSON" {
             .{t(.End)},
     );
     try testWrite(
-        JSON{ .json =
+        Json{ .json =
         \\"\u0000\u0001\u0002A"
     },
         &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x02, 0x41, t(.End) },
