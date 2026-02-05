@@ -17,7 +17,7 @@ fn skipNumPos(r: *ByteReader) IbexError!void {
 fn skipNumNeg(r: *ByteReader) IbexError!void {
     r.negate();
     defer r.negate();
-    return try skipNumPos(r);
+    try skipNumPos(r);
 }
 
 fn skipPastEnd(r: *ByteReader) IbexError!void {
