@@ -443,6 +443,7 @@ test "ibexToJson fuzz" {
     };
     try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
         &.{ t(.NumPos), 0x80, 0x80 },
+        &.{ t(.NumPos), 0x80, 0xf1, 0xe9, 0x01, 0x90 },
         &.{t(.Null)},
         &.{t(.False)},
         &.{t(.True)},
