@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = std.debug.assert;
 
 const ibex = @import("./types.zig");
 const IbexTag = ibex.IbexTag;
@@ -27,6 +28,23 @@ fn skipPastEnd(r: *ByteReader) IbexError!void {
     }
 }
 
+fn skipPastString(r: *ByteReader) IbexError!void {
+    const tail = r.tail();
+    var pos: usize = 0;
+    while (std.mem.findAnyPos(u8, tail, pos, &.{ 0x00, 0x01 })) |esc| {
+        if (tail[esc] == 0x00)
+            return r.skip(esc + 1);
+        assert(tail[esc] == 0x01);
+        if (esc + 1 == tail.len)
+            return IbexError.SyntaxError;
+        if (tail[esc + 1] < 0x01 or tail[esc + 1] > 0x02)
+            return IbexError.SyntaxError;
+        pos = esc + 2;
+    }
+
+    return IbexError.SyntaxError;
+}
+
 fn skipPastZero(r: *ByteReader) IbexError!void {
     if (std.mem.findScalar(u8, r.tail(), 0x00)) |pos|
         return r.skip(pos + 1);
@@ -40,7 +58,7 @@ pub fn skipAfterTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         .Null, .False, .True => {},
         .NumNegNaN, .NumNegInf, .NumNegZero => {},
         .NumPosZero, .NumPosInf, .NumPosNaN => {},
-        .String => skipPastZero(r),
+        .String => skipPastString(r),
         .Collation => {
             try skipPastZero(r);
             return skip(r);

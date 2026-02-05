@@ -452,5 +452,15 @@ test "ibexToJson fuzz" {
             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
             .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
             .{t(.End)},
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+            .{t(.String)} ++ "tags" ++ .{t(.End)} ++
+            .{t(.Array)} ++
+            "" ++ .{t(.String)} ++ "zig" ++ .{t(.End)} ++
+            "" ++ .{t(.String)} ++ "c" ++ .{t(.End)} ++
+            "" ++ .{t(.String)} ++ "perl" ++ .{t(.End)} ++
+            "" ++ .{t(.End)} ++
+            .{t(.End)},
     } });
 }

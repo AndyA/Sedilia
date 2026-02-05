@@ -144,11 +144,10 @@ test mantissaBits {
 }
 
 pub fn skipMantissa(r: *ByteReader) IbexError!void {
-    while (true) {
-        const nb = try r.next();
-        if (nb & 0x01 == 0)
-            break;
-    }
+    var nb = try r.next();
+    if (nb == 0) return;
+    while (nb & 0x01 != 0) nb = try r.next();
+    if (nb == 0) return IbexError.SyntaxError;
 }
 
 test skipMantissa {
