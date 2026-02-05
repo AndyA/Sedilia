@@ -438,7 +438,7 @@ test "ibexToJson fuzz" {
             _ = context;
             const got = ibexToJsonAllocating(gpa, input) catch return;
             defer gpa.free(got);
-            print("{s}\n", .{got});
+            // print("{s}\n", .{got});
         }
     };
     try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
