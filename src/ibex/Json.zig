@@ -464,3 +464,7 @@ test "ibexToJson fuzz" {
             .{t(.End)},
     } });
 }
+
+test {
+    _ = @import("./testing/order.zig");
+}
