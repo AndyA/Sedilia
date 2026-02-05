@@ -195,6 +195,7 @@ fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
 
             return Value{ .object = obj };
         },
+        .End => return IbexError.SyntaxError,
         else => unreachable,
     }
 }

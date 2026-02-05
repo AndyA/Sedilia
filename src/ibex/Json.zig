@@ -135,7 +135,7 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
     try writer.writeByte('"');
     while (true) {
         const frag = try st.next();
-        try Stringify.encodeJsonStringChars(frag.frag, .{ .escape_unicode = true }, writer);
+        try Stringify.encodeJsonStringChars(frag.frag, .{}, writer);
         if (frag.terminal) break;
     }
     try writer.writeByte('"');
@@ -196,6 +196,7 @@ fn ibexToJsonAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!v
             }
             try sfy.endObject();
         },
+        .End => return IbexError.SyntaxError,
         else => unreachable,
     }
 }
@@ -227,7 +228,7 @@ const JsonCleaner = struct {
             self.state = .STRING;
         }
         assert(self.state == .STRING);
-        try Stringify.encodeJsonStringChars(frag, .{ .escape_unicode = true }, sfy.writer);
+        try Stringify.encodeJsonStringChars(frag, .{}, sfy.writer);
     }
 
     fn stringEnd(self: *Self, frag: []const u8) IbexError!void {
@@ -377,6 +378,19 @@ test jsonToIbex {
     try testTransform(gpa, jsonToIbexAllocating, cases);
 }
 
+test "jsonToIbex fuzz" {
+    const gpa = std.testing.allocator;
+    const Context = struct {
+        fn testOne(context: @This(), input: []const u8) anyerror!void {
+            _ = context;
+            const got = jsonToIbexAllocating(gpa, input) catch return;
+            defer gpa.free(got);
+            print("{s}\n", .{input});
+        }
+    };
+    try std.testing.fuzz(Context{}, Context.testOne, .{});
+}
+
 pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
@@ -406,3 +420,16 @@ test ibexToJson {
 
     try testTransform(gpa, ibexToJsonAllocating, cases);
 }
+
+// test "ibexToJson fuzz" {
+//     const gpa = std.testing.allocator;
+//     const Context = struct {
+//         fn testOne(context: @This(), input: []const u8) anyerror!void {
+//             _ = context;
+//             const got = ibexToJsonAllocating(gpa, input) catch return;
+//             defer gpa.free(got);
+//             // print("{s}\n", .{got});
+//         }
+//     };
+//     try std.testing.fuzz(Context{}, Context.testOne, .{});
+// }
