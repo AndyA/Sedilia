@@ -54,6 +54,7 @@ test "ibex ordering" {
         &.{ .integer = 1 },
         &.{ .float = 1.00001 },
         &.{ .integer = std.math.maxInt(i64) },
+        &.{ .float = 3.1414e+100 },
         &.{ .array = ar_empty },
         &.{ .array = ar1 },
         &.{ .array = ar2 },
@@ -67,7 +68,7 @@ test "ibex ordering" {
     var ibex: [cases.len][]const u8 = undefined;
     for (cases, 0..) |c, i| {
         var writer = std.Io.Writer.Allocating.init(gpa);
-        errdefer writer.deinit();
+        defer writer.deinit();
         var bw = bytes.ByteWriter{ .writer = &writer.writer };
         var iw = IbexWriter{ .w = &bw };
         try iw.write(c);
