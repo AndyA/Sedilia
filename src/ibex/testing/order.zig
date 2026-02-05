@@ -49,9 +49,11 @@ test "ibex ordering" {
         &.{ .bool = true },
         &.{ .string = "aaa" },
         &.{ .string = "aab" },
+        &.{ .integer = std.math.minInt(i64) },
         &.{ .float = 0.3 },
         &.{ .integer = 1 },
         &.{ .float = 1.00001 },
+        &.{ .integer = std.math.maxInt(i64) },
         &.{ .array = ar_empty },
         &.{ .array = ar1 },
         &.{ .array = ar2 },
@@ -77,7 +79,6 @@ test "ibex ordering" {
     defer gpa.free(shuffled);
     rand.shuffle([]const u8, shuffled);
 
-    // print("{any}\n", .{shuffled});
     const Context = struct {
         pub fn lt(_: @This(), lhs: []const u8, rhs: []const u8) bool {
             return std.mem.order(u8, lhs, rhs) == .lt;
