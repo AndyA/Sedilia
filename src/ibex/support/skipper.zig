@@ -20,7 +20,18 @@ fn skipNumNeg(r: *ByteReader) IbexError!void {
     try skipNumPos(r);
 }
 
-fn skipPastEnd(r: *ByteReader) IbexError!void {
+fn skipPastObject(r: *ByteReader) IbexError!void {
+    while (true) {
+        const tag = try ibex.tagFromByte(try r.next());
+        if (tag == .End) break;
+        if (tag != .String)
+            return IbexError.SyntaxError;
+        try skipPastString(r);
+        try skip(r);
+    }
+}
+
+fn skipPastArray(r: *ByteReader) IbexError!void {
     while (true) {
         const tag = try ibex.tagFromByte(try r.next());
         if (tag == .End) break;
@@ -37,7 +48,8 @@ fn skipPastString(r: *ByteReader) IbexError!void {
         assert(tail[esc] == 0x01);
         if (esc + 1 == tail.len)
             return IbexError.SyntaxError;
-        if (tail[esc + 1] < 0x01 or tail[esc + 1] > 0x02)
+        const code = tail[esc + 1];
+        if (code != 0x01 and code != 0x02)
             return IbexError.SyntaxError;
         pos = esc + 2;
     }
@@ -65,7 +77,8 @@ pub fn skipAfterTag(r: *ByteReader, tag: IbexTag) IbexError!void {
         },
         .NumNeg => skipNumNeg(r),
         .NumPos => skipNumPos(r),
-        .Array, .Object => skipPastEnd(r),
+        .Array => skipPastArray(r),
+        .Object => skipPastObject(r),
     };
 }
 
