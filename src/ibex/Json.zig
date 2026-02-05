@@ -388,7 +388,13 @@ test "jsonToIbex fuzz" {
             print("{s}\n", .{input});
         }
     };
-    try std.testing.fuzz(Context{}, Context.testOne, .{});
+    try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
+        \\{ "name": "Andy", "checked": false, "rate": 1.5, tags: ["zig", "c"]}
+        \\null
+        \\[1000000, 1e10, -3.1415]
+        \\"\u0000\u0001\u0002\u02fe"
+        \\[{ "funky\n": true }]
+    } });
 }
 
 pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
