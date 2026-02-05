@@ -87,10 +87,15 @@ test compareValues {
         &.{ .bool = true },
         &.{ .string = "aaa" },
         &.{ .string = "aab" },
+        &.{ .float = 0.3 },
+        &.{ .integer = 1 },
+        &.{ .float = 1.00001 },
     };
-    const input = try gpa.dupe(*const Value, cases);
-    defer gpa.free(input);
-    rand.shuffle(*const Value, input);
+
+    const shuffled = try gpa.dupe(*const Value, cases);
+    defer gpa.free(shuffled);
+
+    rand.shuffle(*const Value, shuffled);
 
     const Context = struct {
         pub fn lt(_: @This(), lhs: *const Value, rhs: *const Value) bool {
@@ -98,7 +103,7 @@ test compareValues {
         }
     };
 
-    std.mem.sort(*const Value, input, Context{}, Context.lt);
+    std.mem.sort(*const Value, shuffled, Context{}, Context.lt);
 
-    try std.testing.expectEqualDeep(cases, input);
+    try std.testing.expectEqualDeep(cases, shuffled);
 }
