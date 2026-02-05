@@ -385,7 +385,7 @@ test "jsonToIbex fuzz" {
             _ = context;
             const got = jsonToIbexAllocating(gpa, input) catch return;
             defer gpa.free(got);
-            print("{s}\n", .{input});
+            // print("{s}\n", .{input});
         }
     };
     try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
@@ -431,15 +431,25 @@ test ibexToJson {
     try testTransform(gpa, ibexToJsonAllocating, cases);
 }
 
-// test "ibexToJson fuzz" {
-//     const gpa = std.testing.allocator;
-//     const Context = struct {
-//         fn testOne(context: @This(), input: []const u8) anyerror!void {
-//             _ = context;
-//             const got = ibexToJsonAllocating(gpa, input) catch return;
-//             defer gpa.free(got);
-//             // print("{s}\n", .{got});
-//         }
-//     };
-//     try std.testing.fuzz(Context{}, Context.testOne, .{});
-// }
+test "ibexToJson fuzz" {
+    const gpa = std.testing.allocator;
+    const Context = struct {
+        fn testOne(context: @This(), input: []const u8) anyerror!void {
+            _ = context;
+            const got = ibexToJsonAllocating(gpa, input) catch return;
+            defer gpa.free(got);
+            print("{s}\n", .{got});
+        }
+    };
+    try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
+        &.{ t(.NumPos), 0x80, 0x80 },
+        &.{t(.Null)},
+        &.{t(.False)},
+        &.{t(.True)},
+        &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x02, 0x41, t(.End) },
+        .{t(.Object)} ++
+            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+            .{t(.End)},
+    } });
+}
