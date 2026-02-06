@@ -157,7 +157,7 @@ pub fn nextTag(self: *Self) IbexError!IbexTag {
 fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
     if (tag.isNumber()) {
         var peeker = self.r.fork();
-        const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
+        const meta = try number.IbexNumberMeta.fromReaderAfterTag(&peeker, tag);
         if (meta.intBits()) |_|
             return Value{ .integer = try number.IbexNumber(i64).read(self.r) }
         else

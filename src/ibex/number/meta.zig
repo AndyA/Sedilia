@@ -35,7 +35,7 @@ fn fromNumNeg(r: *ByteReader) IbexError!Self {
     return fromNum(r, true);
 }
 
-pub fn fromReader(r: *ByteReader, tag: IbexTag) IbexError!Self {
+pub fn fromReaderAfterTag(r: *ByteReader, tag: IbexTag) IbexError!Self {
     return switch (tag) {
         .NumNegNaN, .NumNegInf => Self{ .special = true, .negative = true },
         .NumNeg => fromNumNeg(r),
@@ -62,7 +62,7 @@ test {
     try IbexNumber(u64).write(&w, std.math.maxInt(u64));
     var r = ByteReader{ .buf = writer.buffered() };
     const nb = try r.next();
-    const meta: Self = try .fromReader(&r, @enumFromInt(nb));
+    const meta: Self = try .fromReaderAfterTag(&r, @enumFromInt(nb));
     try std.testing.expectEqual(64, meta.intBits());
     // print("{any}\n", .{meta});
 }

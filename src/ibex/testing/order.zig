@@ -62,8 +62,7 @@ test "ibex ordering" {
         &.{ .integer = 1 },
         &.{ .float = 1.00001 },
         &.{ .integer = std.math.maxInt(i64) },
-        // This breaks the number type detection
-        // &.{ .float = 3.1414e+100 },
+        &.{ .float = 3.1514e+100 },
         &.{ .array = ar_empty },
         &.{ .array = ar1 },
         &.{ .array = ar2 },
@@ -97,11 +96,11 @@ test "ibex ordering" {
 
     std.mem.sort([]const u8, shuffled, Context{}, Context.lt);
 
-    // for (shuffled) |i| {
-    //     const json = try Json.ibexToJsonAllocating(gpa, i);
-    //     defer gpa.free(json);
-    //     print("{s}\n", .{json});
-    // }
+    if (false) for (shuffled) |i| {
+        const json = try Json.ibexToJsonAllocating(gpa, i);
+        defer gpa.free(json);
+        print("{s}\n", .{json});
+    };
 
     try std.testing.expectEqualDeep(&ibex, shuffled);
 }

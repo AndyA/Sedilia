@@ -144,26 +144,26 @@ fn encodeString(r: *IbexReader, writer: *std.Io.Writer) IbexError!void {
 fn ibexToJsonAfterTag(r: *IbexReader, tag: IbexTag, sfy: *Stringify) IbexError!void {
     if (tag.isNumber()) {
         var peeker = r.r.fork();
-        const meta = try number.IbexNumberMeta.fromReader(&peeker, tag);
+        const meta = try number.IbexNumberMeta.fromReaderAfterTag(&peeker, tag);
         if (meta.intBits()) |bits| {
             if (bits <= 63) {
                 const n = try r.readAfterTag(i64, tag);
                 return sfy.write(n);
-            } else {
+            } else if (bits <= 127) {
                 const n = try r.readAfterTag(i128, tag);
                 return sfy.write(n);
             }
+        }
+
+        // TODO this test is wrong - because Ibex handles subnormal values using
+        // more negative exponents. Doesn't affect correctness because f128 is
+        // valid for those cases - just a bit slower.
+        if (meta.exponent >= -1022 and meta.exponent <= 1023) {
+            const n = try r.readAfterTag(f64, tag);
+            return sfy.write(n);
         } else {
-            // TODO this test is wrong - because Ibex handles subnormal values using
-            // more negative exponents. Doesn't affect correctness because f128 is
-            // valid for those cases - just a bit slower.
-            if (meta.exponent >= -1022 and meta.exponent <= 1023) {
-                const n = try r.readAfterTag(f64, tag);
-                return sfy.write(n);
-            } else {
-                const n = try r.readAfterTag(f128, tag);
-                return sfy.write(n);
-            }
+            const n = try r.readAfterTag(f128, tag);
+            return sfy.write(n);
         }
     }
 
@@ -405,6 +405,8 @@ pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) Ibex
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
     var br = bytes.ByteReader{ .buf = ibex };
+    // TODO we don't need the allocating bits of an IbexReader here; there
+    // should be no need to allocate at all.
     var ir = IbexReader{ .gpa = arena.allocator(), .r = &br };
     var sfy = Stringify{ .writer = writer };
     try ibexToJsonAfterTag(&ir, try ir.nextTag(), &sfy);
