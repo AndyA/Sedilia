@@ -9,6 +9,7 @@ const types = @import("./support/types.zig");
 const IbexTag = types.IbexTag;
 const IbexError = types.IbexError;
 const number = @import("./number/IbexNumber.zig");
+const NullAllocator = @import("./support/NullAllocator.zig");
 
 const IbexReader = @import("./IbexReader.zig");
 const IbexWriter = @import("./IbexWriter.zig");
@@ -401,19 +402,22 @@ test "jsonToIbex fuzz" {
     } });
 }
 
-pub fn ibexToJson(gpa: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
-    var arena = std.heap.ArenaAllocator.init(gpa);
-    defer arena.deinit();
+pub fn ibexToJson(ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
+    var nop = NullAllocator{};
     var br = bytes.ByteReader{ .buf = ibex };
-    // TODO we don't need the allocating bits of an IbexReader here; there
-    // should be no need to allocate at all.
-    var ir = IbexReader{ .gpa = arena.allocator(), .r = &br };
+    // We're asserting that we won't be asking the IbexReader to do anything that
+    // causes allocation.
+    var ir = IbexReader{ .gpa = nop.allocator(), .r = &br };
     var sfy = Stringify{ .writer = writer };
     try ibexToJsonAfterTag(&ir, try ir.nextTag(), &sfy);
 }
 
+fn ibexToJsonShim(_: Allocator, ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
+    try ibexToJson(ibex, writer);
+}
+
 pub fn ibexToJsonAllocating(gpa: Allocator, ibex: []const u8) IbexError![]const u8 {
-    return try allocatingTransform(ibexToJson)(gpa, ibex);
+    return try allocatingTransform(ibexToJsonShim)(gpa, ibex);
 }
 
 test ibexToJson {

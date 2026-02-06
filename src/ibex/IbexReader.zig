@@ -148,7 +148,7 @@ fn skipPastZero(self: *Self) IbexError!void {
 
 pub fn nextTag(self: *Self) IbexError!IbexTag {
     while (true) {
-        const tag = try ibex.tagFromByte(try self.r.next());
+        const tag = try self.r.nextTag();
         if (tag != .Collation) return tag;
         try self.skipPastZero();
     }

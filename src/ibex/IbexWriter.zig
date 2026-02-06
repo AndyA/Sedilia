@@ -21,7 +21,7 @@ const Self = @This();
 w: *ByteWriter,
 
 pub fn writeTag(self: *Self, tag: IbexTag) IbexError!void {
-    try self.w.put(@intFromEnum(tag));
+    try self.w.putTag(tag);
 }
 
 pub fn writeBytes(self: *Self, b: []const u8) IbexError!void {

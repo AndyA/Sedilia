@@ -3,6 +3,7 @@ const assert = std.debug.assert;
 const ibex = @import("./types.zig");
 
 const IbexError = ibex.IbexError;
+const IbexTag = ibex.IbexTag;
 
 pub const ByteReader = struct {
     const Self = @This();
@@ -19,15 +20,15 @@ pub const ByteReader = struct {
         return self.pos == self.buf.len;
     }
 
-    pub fn peek(self: *Self) IbexError!u8 {
+    pub fn next(self: *Self) IbexError!u8 {
         if (self.eof())
             return IbexError.UnexpectedEndOfInput;
+        defer self.pos += 1;
         return self.buf[self.pos] ^ self.flip;
     }
 
-    pub fn next(self: *Self) IbexError!u8 {
-        defer self.pos += 1;
-        return try self.peek();
+    pub fn nextTag(self: *Self) IbexError!IbexTag {
+        return try ibex.tagFromByte(try self.next());
     }
 
     pub fn negate(self: *Self) void {
@@ -53,6 +54,10 @@ pub const ByteWriter = struct {
 
     pub fn put(self: *BW, b: u8) IbexError!void {
         try self.writer.writeByte(b ^ self.flip);
+    }
+
+    pub fn putTag(self: *BW, tag: IbexTag) IbexError!void {
+        try self.put(@intFromEnum(tag));
     }
 
     pub fn append(self: *BW, bytes: []const u8) IbexError!void {
