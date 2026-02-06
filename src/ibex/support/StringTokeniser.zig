@@ -16,8 +16,8 @@ pub fn next(self: *Self) IbexError!Token {
     switch (self.state) {
         .INIT => {
             if (std.mem.findAny(u8, tail, &.{ 0x00, 0x01 })) |esc| {
-                try self.r.skip(esc + 1);
-                switch (tail[esc]) {
+                try self.r.skip(esc);
+                switch (try self.r.next()) {
                     0x00 => {
                         self.state = .DONE;
                         return .{ .frag = tail[0..esc], .terminal = true };
@@ -30,7 +30,7 @@ pub fn next(self: *Self) IbexError!Token {
                 }
             }
 
-            return IbexError.SyntaxError;
+            return IbexError.SyntaxError; // missing terminator
         },
         .ESCAPE => {
             self.state = .INIT;
