@@ -22,5 +22,5 @@ pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Self {
 }
 
 pub fn format(self: Self, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    try Json.ibexToJson(self.ibex, writer);
+    Json.ibexToJson(self.ibex, writer) catch return error.WriteFailed;
 }
