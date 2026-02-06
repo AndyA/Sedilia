@@ -50,6 +50,12 @@ test "ibex ordering" {
         &.{ .string = "aaa" },
         &.{ .string = "aaaa" },
         &.{ .string = "aab" },
+        &.{ .string = "z\x00a" },
+        &.{ .string = "z\x00b" },
+        &.{ .string = "z\x01a" },
+        &.{ .string = "z\x01b" },
+        &.{ .string = "z\x02a" },
+        &.{ .string = "z\x02b" },
         &.{ .integer = std.math.minInt(i64) },
         &.{ .float = 0.3 },
         &.{ .integer = 1 },
@@ -80,6 +86,9 @@ test "ibex ordering" {
     const shuffled = try gpa.dupe([]const u8, &ibex);
     defer gpa.free(shuffled);
     rand.shuffle([]const u8, shuffled);
+
+    // for (shuffled) |s|
+    //     print("{any}\n", .{s});
 
     const Context = struct {
         pub fn lt(_: @This(), lhs: []const u8, rhs: []const u8) bool {
