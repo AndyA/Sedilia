@@ -33,9 +33,8 @@ pub fn next(self: *Self) IbexError!Token {
             return IbexError.SyntaxError;
         },
         .ESCAPE => {
-            try self.r.skip(1);
             self.state = .INIT;
-            return switch (tail[0]) {
+            return switch (try self.r.next()) {
                 0x01 => .{ .frag = "\x00" },
                 0x02 => .{ .frag = "\x01" },
                 else => IbexError.SyntaxError,
