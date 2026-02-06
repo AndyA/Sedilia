@@ -352,8 +352,7 @@ test jsonToJson {
 pub fn jsonToIbex(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) IbexError!void {
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
-    var bw = bytes.ByteWriter{ .writer = writer };
-    var iw = IbexWriter{ .w = &bw };
+    var iw = IbexWriter.init(writer);
     var jw = JsonWriter{ .gpa = arena.allocator(), .w = &iw };
     try jw.write(json);
 }

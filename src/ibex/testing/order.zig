@@ -78,8 +78,7 @@ test "ibex ordering" {
     for (cases, 0..) |c, i| {
         var writer = std.Io.Writer.Allocating.init(gpa);
         defer writer.deinit();
-        var bw = bytes.ByteWriter{ .writer = &writer.writer };
-        var iw = IbexWriter{ .w = &bw };
+        var iw = IbexWriter.init(&writer.writer);
         try iw.write(c);
         ibex[i] = try writer.toOwnedSlice();
     }

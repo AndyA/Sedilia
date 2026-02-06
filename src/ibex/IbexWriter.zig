@@ -14,7 +14,11 @@ const Json = @import("./Json.zig");
 
 const Self = @This();
 
-w: *ByteWriter,
+w: ByteWriter,
+
+pub fn init(writer: *std.Io.Writer) Self {
+    return Self{ .w = bytes.ByteWriter{ .writer = writer } };
+}
 
 pub fn writeTag(self: *Self, tag: IbexTag) IbexError!void {
     try self.w.putTag(tag);
@@ -101,7 +105,7 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
     return switch (@typeInfo(T)) {
         .null => try self.writeTag(.Null),
         .bool => try self.writeTag(if (v) .True else .False),
-        .int, .float => try IbexNumber(T).write(self.w, v),
+        .int, .float => try IbexNumber(T).write(&self.w, v),
         .comptime_float => try self.write(@as(f64, @floatCast(v))),
         .comptime_int => try self.write(@as(std.math.IntFittingRange(v, v), v)),
         .optional => {
@@ -173,8 +177,7 @@ const bm = @import("../support/bm.zig");
 fn testWrite(value: anytype, expect: []const u8) !void {
     var buf: [256]u8 = undefined;
     var writer = std.Io.Writer.fixed(&buf);
-    var bw = ByteWriter{ .writer = &writer };
-    var iw = Self{ .w = &bw };
+    var iw = Self{ .w = ByteWriter{ .writer = &writer } };
     try iw.write(value);
     // print(">> {any} ({any})\n", .{ value, @TypeOf(value) });
     // bm.hexDump(bw.slice(), 0);
