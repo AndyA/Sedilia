@@ -2,7 +2,7 @@ const std = @import("std");
 const IbexError = @import("./types.zig").IbexError;
 const bytes = @import("./bytes.zig");
 
-const ST = @This();
+const Self = @This();
 r: *bytes.ByteReader,
 state: enum { INIT, ESCAPE, DONE } = .INIT,
 
@@ -11,7 +11,7 @@ pub const Token = struct {
     terminal: bool = false,
 };
 
-pub fn next(self: *ST) IbexError!Token {
+pub fn next(self: *Self) IbexError!Token {
     const tail = self.r.tail();
     switch (self.state) {
         .INIT => {
