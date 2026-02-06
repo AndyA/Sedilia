@@ -2,10 +2,6 @@ const std = @import("std");
 const intCodec = @import("./int.zig").intCodec;
 const floatCodec = @import("./float.zig").floatCodec;
 
-test {
-    std.testing.refAllDecls(@This());
-}
-
 pub fn IbexNumber(comptime T: type) type {
     return switch (@typeInfo(T)) {
         .float => floatCodec(T),

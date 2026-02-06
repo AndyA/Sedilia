@@ -8,13 +8,9 @@ const IbexError = ibex.IbexError;
 const bytes = @import("./support/bytes.zig");
 const ByteReader = bytes.ByteReader;
 const ByteWriter = bytes.ByteWriter;
-const Literal = @import("./Literal.zig");
+const Ibex = @import("./Ibex.zig");
 const IbexNumber = @import("./number/IbexNumber.zig").IbexNumber;
 const Json = @import("./Json.zig");
-
-test {
-    std.testing.refAllDecls(@This());
-}
 
 const Self = @This();
 
@@ -230,9 +226,9 @@ test "Value" {
 }
 
 test "writeToIbex hook" {
-    try testWrite(Literal{ .ibex = &.{t(.Null)} }, &.{t(.Null)});
+    try testWrite(Ibex{ .ibex = &.{t(.Null)} }, &.{t(.Null)});
     try testWrite(
-        .{ .name = "Andy", .rate = Literal{ .ibex = &.{ t(.NumPos), 0x80, 0x80 } } },
+        .{ .name = "Andy", .rate = Ibex{ .ibex = &.{ t(.NumPos), 0x80, 0x80 } } },
         .{t(.Object)} ++
             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
             .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++

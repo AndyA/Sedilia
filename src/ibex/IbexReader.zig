@@ -13,10 +13,6 @@ const ByteReader = bytes.ByteReader;
 const number = @import("./number/IbexNumber.zig");
 const skipper = @import("./support/skipper.zig");
 
-test {
-    std.testing.refAllDecls(@This());
-}
-
 const Self = @This();
 
 pub const Options = struct {

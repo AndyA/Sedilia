@@ -2,10 +2,15 @@ const std = @import("std");
 const ibx = @import("./support/types.zig");
 const IbexTag = ibx.IbexTag;
 const IbexError = ibx.IbexError;
-const IbexWriter = @import("./IbexWriter.zig");
-const IbexReader = @import("./IbexReader.zig");
-const Json = @import("./Json.zig");
 const skipper = @import("./support/skipper.zig");
+
+pub const IbexWriter = @import("./IbexWriter.zig");
+pub const IbexReader = @import("./IbexReader.zig");
+pub const Json = @import("./Json.zig");
+
+test {
+    std.testing.refAllDecls(@This());
+}
 
 const Self = @This();
 
@@ -17,8 +22,8 @@ pub fn writeToIbex(self: *const Self, w: *IbexWriter) IbexError!void {
 
 pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Self {
     const before = r.r.pos - 1; // adjust for tag
-    try skipper.skipAfterTag(r, tag);
-    return Self{ .ibex = r.gpa.dupe(u8, r.r.buf[before..r.r.pos]) };
+    try skipper.skipAfterTag(r.r, tag);
+    return Self{ .ibex = try r.gpa.dupe(u8, r.r.buf[before..r.r.pos]) };
 }
 
 pub fn format(self: Self, writer: *std.Io.Writer) std.Io.Writer.Error!void {

@@ -6,8 +6,7 @@ pub fn main() !void {
 }
 
 test {
-    _ = @import("./ibex/IbexWriter.zig");
-    _ = @import("./ibex/IbexReader.zig");
+    _ = @import("./ibex/Ibex.zig");
     _ = @import("./support/bm.zig");
     _ = @import("./support/wildcard.zig");
 }

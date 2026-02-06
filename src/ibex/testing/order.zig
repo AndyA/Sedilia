@@ -6,7 +6,7 @@ const Value = std.json.Value;
 const bytes = @import("../support/bytes.zig");
 const IbexWriter = @import("../IbexWriter.zig");
 const Json = @import("../Json.zig");
-const Literal = @import("../Literal.zig");
+const Ibex = @import("../Ibex.zig");
 const sortValues = @import("./value.zig").sortValues;
 
 test "ibex ordering" {
@@ -98,7 +98,7 @@ test "ibex ordering" {
     std.mem.sort([]const u8, shuffled, Context{}, Context.lt);
 
     if (false) for (shuffled) |i| {
-        print("{f}\n", .{Literal{ .ibex = i }});
+        print("{f}\n", .{Ibex{ .ibex = i }});
     };
 
     try std.testing.expectEqualDeep(&ibex, shuffled);
