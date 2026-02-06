@@ -15,7 +15,7 @@ const skipper = @import("./support/skipper.zig");
 
 const StringTokeniser = @import("./support/StringTokeniser.zig");
 
-fn ObjectProxy(comptime T: type) type {
+fn objectProxy(comptime T: type) type {
     const fields = @typeInfo(T).@"struct".fields;
     const SetType = @Int(.unsigned, fields.len);
 
@@ -54,7 +54,10 @@ fn ObjectProxy(comptime T: type) type {
         pub fn readField(self: *OP, rdr: *Self, idx: usize) !void {
             switch (idx) {
                 inline 0...fields.len - 1 => |i| {
-                    self.seen |= @as(SetType, 1) << i;
+                    const bit = @as(SetType, 1) << i;
+                    if (self.seen & bit != 0)
+                        return IbexError.DuplicateKey;
+                    self.seen |= bit;
                     @field(self.obj, fields[i].name) =
                         try rdr.read(fields[i].type);
                 },
@@ -262,7 +265,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
             if (@hasDecl(T, "readFromIbex"))
                 return T.readFromIbex(self, tag);
 
-            var prox = ObjectProxy(T){};
+            var prox = objectProxy(T){};
 
             if (strc.is_tuple) {
                 if (tag != .Array)

@@ -71,4 +71,5 @@ pub const IbexError = error{
     UnknownKey,
     MissingKeys,
     WriteFailed,
+    DuplicateKey,
 };
