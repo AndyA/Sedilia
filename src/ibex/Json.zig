@@ -403,10 +403,9 @@ test "jsonToIbex fuzz" {
 
 pub fn ibexToJson(ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
     var nop = NullAllocator{};
-    var br = bytes.ByteReader{ .buf = ibex };
     // We're asserting that we won't be asking the IbexReader to do anything that
     // causes allocation.
-    var ir = IbexReader{ .gpa = nop.allocator(), .r = &br };
+    var ir = IbexReader.init(nop.allocator(), ibex);
     var sfy = Stringify{ .writer = writer };
     try ibexToJsonAfterTag(&ir, try ir.nextTag(), &sfy);
 }

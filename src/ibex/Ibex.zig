@@ -22,7 +22,7 @@ pub fn writeToIbex(self: *const Self, w: *IbexWriter) IbexError!void {
 
 pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Self {
     const before = r.r.pos - 1; // adjust for tag
-    try skipper.skipAfterTag(r.r, tag);
+    try skipper.skipAfterTag(&r.r, tag);
     return Self{ .ibex = try r.gpa.dupe(u8, r.r.buf[before..r.r.pos]) };
 }
 

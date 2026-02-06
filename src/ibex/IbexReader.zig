@@ -3,9 +3,9 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const Value = std.json.Value;
 
-const ibex = @import("./support/types.zig");
-const IbexTag = ibex.IbexTag;
-const IbexError = ibex.IbexError;
+const types = @import("./support/types.zig");
+const IbexTag = types.IbexTag;
+const IbexError = types.IbexError;
 
 const bytes = @import("./support/bytes.zig");
 const ByteReader = bytes.ByteReader;
@@ -13,60 +13,7 @@ const ByteReader = bytes.ByteReader;
 const number = @import("./number/IbexNumber.zig");
 const skipper = @import("./support/skipper.zig");
 
-const Self = @This();
-
-pub const Options = struct {
-    strict_keys: bool = false,
-};
-
-r: *ByteReader,
-gpa: Allocator,
-opt: Options = .{},
-
-pub const StringTokeniser = struct {
-    const ST = @This();
-    r: *ByteReader,
-    state: enum { INIT, ESCAPE, DONE } = .INIT,
-
-    pub const Token = struct {
-        frag: []const u8,
-        terminal: bool = false,
-    };
-
-    pub fn next(self: *ST) IbexError!Token {
-        const tail = self.r.tail();
-        switch (self.state) {
-            .INIT => {
-                if (std.mem.findAny(u8, tail, &.{ 0x00, 0x01 })) |esc| {
-                    try self.r.skip(esc + 1);
-                    switch (tail[esc]) {
-                        0x00 => {
-                            self.state = .DONE;
-                            return .{ .frag = tail[0..esc], .terminal = true };
-                        },
-                        0x01 => {
-                            self.state = .ESCAPE;
-                            return .{ .frag = tail[0..esc] };
-                        },
-                        else => unreachable,
-                    }
-                }
-
-                return IbexError.SyntaxError;
-            },
-            .ESCAPE => {
-                try self.r.skip(1);
-                self.state = .INIT;
-                return switch (tail[0]) {
-                    0x01 => .{ .frag = "\x00" },
-                    0x02 => .{ .frag = "\x01" },
-                    else => IbexError.SyntaxError,
-                };
-            },
-            .DONE => unreachable,
-        }
-    }
-};
+const StringTokeniser = @import("./support/StringTokeniser.zig");
 
 fn ObjectProxy(comptime T: type) type {
     const fields = @typeInfo(T).@"struct".fields;
@@ -135,6 +82,28 @@ fn ObjectProxy(comptime T: type) type {
     };
 }
 
+const Self = @This();
+
+pub const Options = struct {
+    strict_keys: bool = false,
+};
+
+r: ByteReader,
+gpa: Allocator,
+opt: Options = .{},
+
+pub fn initWithOptions(gpa: Allocator, ibex: []const u8, opt: Options) Self {
+    return Self{
+        .gpa = gpa,
+        .r = bytes.ByteReader{ .buf = ibex },
+        .opt = opt,
+    };
+}
+
+pub fn init(gpa: Allocator, ibex: []const u8) Self {
+    return initWithOptions(gpa, ibex, .{});
+}
+
 fn skipPastZero(self: *Self) IbexError!void {
     if (std.mem.findScalar(u8, self.r.tail(), 0x00)) |pos|
         return self.r.skip(pos + 1);
@@ -197,7 +166,7 @@ fn readValue(self: *Self, tag: IbexTag) IbexError!Value {
 }
 
 pub fn stringTokeniser(self: *Self) StringTokeniser {
-    return .{ .r = self.r };
+    return .{ .r = &self.r };
 }
 
 pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
@@ -207,7 +176,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
     }
 
     switch (@typeInfo(T)) {
-        .int, .float => return number.IbexNumber(T).readAfterTag(self.r, tag),
+        .int, .float => return number.IbexNumber(T).readAfterTag(&self.r, tag),
         .bool => return switch (tag) {
             .False => false,
             .True => true,
@@ -319,7 +288,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     } else if (self.opt.strict_keys) {
                         return IbexError.UnknownKey;
                     } else {
-                        try skipper.skip(self.r);
+                        try skipper.skip(&self.r);
                     }
                 }
             }
@@ -338,8 +307,7 @@ fn testRead(gpa: Allocator, msg: []const u8, comptime T: type, expect: T) !void 
     var arena = std.heap.ArenaAllocator.init(gpa);
     defer arena.deinit();
 
-    var br = ByteReader{ .buf = msg };
-    var ir = Self{ .gpa = arena.allocator(), .r = &br };
+    var ir = Self{ .gpa = arena.allocator(), .r = ByteReader{ .buf = msg } };
     const got: T = try ir.read(T);
     try std.testing.expectEqualDeep(expect, got);
 }
