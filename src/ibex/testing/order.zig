@@ -48,6 +48,7 @@ test "ibex ordering" {
         &.{ .bool = false },
         &.{ .bool = true },
         &.{ .string = "aaa" },
+        &.{ .string = "aaaa" },
         &.{ .string = "aab" },
         &.{ .integer = std.math.minInt(i64) },
         &.{ .float = 0.3 },
