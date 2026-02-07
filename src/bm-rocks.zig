@@ -52,7 +52,7 @@ const Benchmarks = struct {
         var prng = std.Random.DefaultPrng.init(123);
         const rand = prng.random();
 
-        var timer = try Timer.start();
+        const start_ts = std.Io.Clock.awake.now(self.io);
 
         for (0..reps) |_| {
             const batch = rocksdb.batch.WriteBatch.init();
@@ -67,7 +67,7 @@ const Benchmarks = struct {
             try db.write(batch, &err);
         }
 
-        bm.showRate(name, label, actual_docs, &timer);
+        bm.showRate(self.io, name, label, actual_docs, start_ts);
 
         // var iter = db.iterator(cf[0].handle, .forward, null);
         // while (try iter.next(&err)) |i| {

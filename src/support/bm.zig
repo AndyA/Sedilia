@@ -1,6 +1,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
+const Io = std.Io;
 const Timer = std.time.Timer;
 
 const bytes = @import("../ibex/support/bytes.zig");
@@ -47,8 +48,8 @@ pub fn loadTestData(comptime T: type, io: std.Io, gpa: Allocator, file: []const 
     return buf;
 }
 
-pub fn showRate(name: []const u8, metric: []const u8, total: usize, timer: *Timer) void {
-    const elapsed = timer.lap();
+pub fn showRate(io: Io, name: []const u8, metric: []const u8, total: usize, start_ts: Io.Timestamp) void {
+    const elapsed = start_ts.untilNow(io, .awake).toNanoseconds();
     // std.debug.print("elapsed={d}\n", .{elapsed});
     const seconds = @as(f64, @floatFromInt(elapsed)) / 1_000_000_000;
     const rate = @as(f64, @floatFromInt(total)) / seconds;
@@ -61,12 +62,13 @@ pub const BMOptions = struct {
     name: []const u8,
 };
 
-pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options: BMOptions) !void {
+pub fn benchmarkCodec(gpa: Allocator, io: Io, codec: anytype, numbers: anytype, options: BMOptions) !void {
     var enc_size: usize = undefined;
     const CT = @typeInfo(@TypeOf(numbers)).pointer.child;
 
     {
-        var timer = try Timer.start();
+        const start_ts = std.Io.Clock.awake.now(io);
+
         for (0..options.repeats) |_| {
             enc_size = 0;
             for (numbers) |n| {
@@ -77,25 +79,24 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
             const avg_bytes: f64 = @as(f64, @floatFromInt(enc_size)) /
                 @as(f64, @floatFromInt(numbers.len));
             std.debug.print("# average bytes: {d}\n", .{avg_bytes});
-            showRate(options.name, "encodedLength", numbers.len * options.repeats, &timer);
+            showRate(io, options.name, "encodedLength", numbers.len * options.repeats, start_ts);
         }
     }
 
     const enc_buf = try gpa.alloc(u8, enc_size);
     defer gpa.free(enc_buf);
 
-    var w = ByteWriter{ .buf = enc_buf };
     {
-        var timer = try Timer.start();
+        const start_ts = std.Io.Clock.awake.now(io);
         for (0..options.repeats) |_| {
-            w.pos = 0;
+            var writer = std.Io.Writer.fixed(enc_buf);
+            var w = ByteWriter{ .writer = &writer };
             for (numbers) |n| {
                 try codec.write(&w, n);
             }
-            assert(w.pos == enc_size);
         }
         if (options.output)
-            showRate(options.name, "write", numbers.len * options.repeats, &timer);
+            showRate(io, options.name, "write", numbers.len * options.repeats, start_ts);
     }
 
     const output = try gpa.alloc(CT, numbers.len);
@@ -103,18 +104,16 @@ pub fn benchmarkCodec(gpa: Allocator, codec: anytype, numbers: anytype, options:
 
     // hexDump(enc_buf[0..0x80], 0);
 
-    var r = ByteReader{ .buf = w.slice() };
     {
-        var timer = try Timer.start();
+        const start_ts = std.Io.Clock.awake.now(io);
         for (0..options.repeats) |_| {
-            r.pos = 0;
+            var r = ByteReader{ .buf = enc_buf };
             for (0..numbers.len) |i| {
                 output[i] = try codec.read(&r);
             }
-            assert(w.pos == r.pos);
         }
         if (options.output)
-            showRate(options.name, "read", numbers.len * options.repeats, &timer);
+            showRate(io, options.name, "read", numbers.len * options.repeats, start_ts);
     }
 
     for (numbers, 0..) |n, i| {

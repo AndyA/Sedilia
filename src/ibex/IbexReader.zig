@@ -16,11 +16,11 @@ const skipper = @import("./support/skipper.zig");
 const StringTokeniser = @import("./support/StringTokeniser.zig");
 
 fn objectProxy(comptime T: type) type {
-    const fields = @typeInfo(T).@"struct".fields;
-    const SetType = @Int(.unsigned, fields.len);
-
     return struct {
+        const fields = @typeInfo(T).@"struct".fields;
+        const SetType = @Int(.unsigned, fields.len);
         const OP = @This();
+
         seen: SetType = 0,
         obj: T = undefined,
 

@@ -1,6 +1,6 @@
 const std = @import("std");
 
-fn benchmark(
+fn utility(
     b: *std.Build,
     comptime name: []const u8,
     target: std.Build.ResolvedTarget,
@@ -50,7 +50,7 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    const mule_exe = benchmark(b, "mule", target, optimize);
+    const mule_exe = utility(b, "mule", target, optimize);
     const mule_tests = b.addTest(.{
         .root_module = mule_exe.root_module,
     });
@@ -60,8 +60,10 @@ pub fn build(b: *std.Build) void {
 
     test_step.dependOn(&run_mule_tests.step);
 
+    _ = utility(b, "jfilt", target, optimize);
+
     // Benchmarks
-    _ = benchmark(b, "bm-codec", target, optimize);
-    const bm_rocks_exe = benchmark(b, "bm-rocks", target, optimize);
+    _ = utility(b, "bm-codec", target, optimize);
+    const bm_rocks_exe = utility(b, "bm-rocks", target, optimize);
     bm_rocks_exe.root_module.addImport("rocksdb", rdb_bindings);
 }
