@@ -230,7 +230,7 @@ const JsonFilter = struct {
     pub fn scan(self: *Self) !void {
         self.path.items.len = 0;
         try self.path.append(self.gpa, '$');
-        return try self.scanAfterToken(try self.next());
+        return try self.afterToken(try self.next());
     }
 };
 
