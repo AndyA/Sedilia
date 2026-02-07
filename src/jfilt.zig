@@ -11,8 +11,9 @@ const JsonFilter = struct {
 
     gpa: Allocator,
     reader: *std.Io.Reader,
+    writer: *std.Io.Writer,
     scanner: Scanner,
-    stringify: Stringify,
+    stringify: Stringify = undefined,
     prefix: []const u8,
     foo: [128 * 1024]u8 = undefined,
 
@@ -27,8 +28,9 @@ const JsonFilter = struct {
         return Self{
             .gpa = gpa,
             .reader = reader,
+            .writer = writer,
             .scanner = Scanner.initStreaming(gpa),
-            .stringify = Stringify{ .writer = writer },
+            // .stringify = Stringify{ .writer = writer },
             .prefix = prefix,
         };
     }
@@ -94,15 +96,20 @@ const JsonFilter = struct {
         }
     }
 
+    fn echoStringBodyAfterToken(self: *Self, tok: Scanner.Token) !void {
+        const sfy = &self.stringify;
+        try sfy.writer.writeByte('"');
+        try self.echoPartialAfterToken(tok);
+        try sfy.writer.writeByte('"');
+    }
+
     fn echoObject(self: *Self) anyerror!void {
         const sfy = &self.stringify;
         var tok = try self.next();
         try sfy.beginObject();
         while (tok != .object_end) : (tok = try self.next()) {
             try sfy.beginObjectFieldRaw();
-            try sfy.writer.writeByte('"');
-            try self.echoPartialAfterToken(tok);
-            try sfy.writer.writeByte('"');
+            try self.echoStringBodyAfterToken(tok);
             sfy.endObjectFieldRaw();
             try self.echoAfterToken(try self.next());
         }
@@ -112,9 +119,7 @@ const JsonFilter = struct {
     fn echoStringAfterToken(self: *Self, tok: Scanner.Token) !void {
         const sfy = &self.stringify;
         try sfy.beginWriteRaw();
-        try sfy.writer.writeByte('"');
-        try self.echoPartialAfterToken(tok);
-        try sfy.writer.writeByte('"');
+        try self.echoStringBodyAfterToken(tok);
         sfy.endWriteRaw();
     }
 
@@ -155,7 +160,7 @@ const JsonFilter = struct {
 
         var tok = try self.next();
         while (tok != .array_end) : (tok = try self.next()) {
-            try self.afterToken(tok);
+            try self.walkAfterToken(tok);
         }
     }
 
@@ -188,12 +193,13 @@ const JsonFilter = struct {
             const path_len = self.path.items.len;
             defer self.path.items.len = path_len;
             try self.scanKeyAfterToken(tok);
-            try self.afterToken(try self.next());
+            try self.walkAfterToken(try self.next());
         }
     }
 
-    fn afterToken(self: *Self, tok: Scanner.Token) anyerror!void {
+    fn walkAfterToken(self: *Self, tok: Scanner.Token) anyerror!void {
         if (std.mem.eql(u8, self.prefix, self.path.items)) {
+            self.stringify = Stringify{ .writer = self.writer };
             try self.echoAfterToken(tok);
             try self.stringify.writer.writeByte('\n');
         } else {
@@ -227,10 +233,10 @@ const JsonFilter = struct {
         }
     }
 
-    pub fn scan(self: *Self) !void {
+    pub fn transform(self: *Self) !void {
         self.path.items.len = 0;
         try self.path.append(self.gpa, '$');
-        return try self.afterToken(try self.next());
+        return try self.walkAfterToken(try self.next());
     }
 };
 
@@ -245,7 +251,7 @@ pub fn main(init: std.process.Init) !void {
 
     var filt = JsonFilter.init(init.gpa, &reader.interface, &writer.interface, args[1]);
     defer filt.deinit();
-    try filt.scan();
+    try filt.transform();
 
     try writer.interface.flush();
 }
