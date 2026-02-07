@@ -34,6 +34,11 @@ const JsonFilter = struct {
         };
     }
 
+    pub fn deinit(self: *Self) void {
+        self.path.deinit(self.gpa);
+        self.scanner.deinit();
+    }
+
     fn stringPart(self: *Self, frag: []const u8) !void {
         const sfy = &self.stringify;
         if (self.state == .init) {
@@ -207,19 +212,28 @@ const JsonFilter = struct {
     }
 
     fn scanAfterToken(self: *Self, tok: Scanner.Token) !void {
-        switch (tok) {
-            .null, .false, .true => {},
-            .partial_string => {},
-            .partial_string_escaped_1 => {},
-            .partial_string_escaped_2 => {},
-            .partial_string_escaped_3 => {},
-            .partial_string_escaped_4 => {},
-            .string => {},
-            .partial_number => {},
-            .number => {},
-            .array_begin => try self.scanArray(),
-            .object_begin => try self.scanObject(),
-            else => unreachable,
+        var nt = tok;
+        blk: while (true) : (nt = try self.next()) {
+            switch (nt) {
+                .null, .false, .true => break :blk,
+                .partial_string => {},
+                .partial_string_escaped_1 => {},
+                .partial_string_escaped_2 => {},
+                .partial_string_escaped_3 => {},
+                .partial_string_escaped_4 => {},
+                .string => break :blk,
+                .partial_number => {},
+                .number => break :blk,
+                .array_begin => {
+                    try self.scanArray();
+                    break :blk;
+                },
+                .object_begin => {
+                    try self.scanObject();
+                    break :blk;
+                },
+                else => unreachable,
+            }
         }
     }
 
@@ -237,5 +251,6 @@ pub fn main(init: std.process.Init) !void {
     var reader = std.Io.File.stdin().reader(init.io, &r_buf);
 
     var filt = JsonFilter.init(init.gpa, &reader.interface, &writer.interface, "");
+    defer filt.deinit();
     try filt.scan();
 }
