@@ -233,6 +233,16 @@ const JsonFilter = struct {
         }
     }
 
+    pub fn transform_doesnt_work(self: *Self) !void {
+        var tok = try self.next();
+        while (tok != .end_of_document) : (tok = try self.next()) {
+            print("tok={any}\n", .{tok});
+            self.path.items.len = 0;
+            try self.path.append(self.gpa, '$');
+            try self.walkAfterToken(tok);
+        }
+    }
+
     pub fn transform(self: *Self) !void {
         self.path.items.len = 0;
         try self.path.append(self.gpa, '$');
