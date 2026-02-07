@@ -66,18 +66,27 @@ const JsonFilter = struct {
         try sfy.endArray();
     }
 
+    fn encodeChars(self: *Self, frag: []const u8) !void {
+        try Stringify.encodeJsonStringChars(frag, .{}, self.stringify.writer);
+    }
+
     fn echoPartialAfterToken(self: *Self, tok: Scanner.Token) anyerror!void {
         const sfy = &self.stringify;
         var ntok = tok;
         blk: while (true) : (ntok = try self.next()) {
             switch (ntok) {
-                .partial_number, .partial_string => |str| try sfy.writer.writeAll(str),
-                .partial_string_escaped_1 => |str| try sfy.writer.writeAll(&str),
-                .partial_string_escaped_2 => |str| try sfy.writer.writeAll(&str),
-                .partial_string_escaped_3 => |str| try sfy.writer.writeAll(&str),
-                .partial_string_escaped_4 => |str| try sfy.writer.writeAll(&str),
-                .string, .number => |str| {
+                .partial_number => |str| try sfy.writer.writeAll(str),
+                .number => |str| {
                     try sfy.writer.writeAll(str);
+                    break :blk;
+                },
+                .partial_string => |str| try self.encodeChars(str),
+                .partial_string_escaped_1 => |str| try self.encodeChars(&str),
+                .partial_string_escaped_2 => |str| try self.encodeChars(&str),
+                .partial_string_escaped_3 => |str| try self.encodeChars(&str),
+                .partial_string_escaped_4 => |str| try self.encodeChars(&str),
+                .string => |str| {
+                    try self.encodeChars(str);
                     break :blk;
                 },
                 else => unreachable,
@@ -91,7 +100,9 @@ const JsonFilter = struct {
         try sfy.beginObject();
         while (tok != .object_end) : (tok = try self.next()) {
             try sfy.beginObjectFieldRaw();
+            try sfy.writer.writeByte('"');
             try self.echoPartialAfterToken(tok);
+            try sfy.writer.writeByte('"');
             sfy.endObjectFieldRaw();
             try self.echoAfterToken(try self.next());
         }
@@ -107,13 +118,6 @@ const JsonFilter = struct {
         sfy.endWriteRaw();
     }
 
-    fn echoRawAfterToken(self: *Self, tok: Scanner.Token) !void {
-        const sfy = &self.stringify;
-        try sfy.beginWriteRaw();
-        try self.echoPartialAfterToken(tok);
-        sfy.endWriteRaw();
-    }
-
     fn echoAfterToken(self: *Self, tok: Scanner.Token) !void {
         const sfy = &self.stringify;
         switch (tok) {
@@ -126,7 +130,11 @@ const JsonFilter = struct {
             .array_begin => try self.echoArray(),
             .object_begin => try self.echoObject(),
 
-            .partial_number, .number => try self.echoRawAfterToken(tok),
+            .partial_number, .number => {
+                try sfy.beginWriteRaw();
+                try self.echoPartialAfterToken(tok);
+                sfy.endWriteRaw();
+            },
 
             .partial_string => try self.echoStringAfterToken(tok),
             .partial_string_escaped_1 => try self.echoStringAfterToken(tok),
