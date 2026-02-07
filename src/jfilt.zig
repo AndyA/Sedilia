@@ -16,7 +16,6 @@ const JsonFilter = struct {
     prefix: []const u8,
     foo: [128 * 1024]u8 = undefined,
 
-    state: enum { init, string, number } = .init,
     path: std.ArrayList(u8) = .empty,
 
     pub fn init(
@@ -39,45 +38,8 @@ const JsonFilter = struct {
         self.scanner.deinit();
     }
 
-    fn stringPart(self: *Self, frag: []const u8) !void {
-        const sfy = &self.stringify;
-        if (self.state == .init) {
-            try sfy.beginWriteRaw();
-            try sfy.writer.writeByte('"');
-            self.state = .string;
-        }
-        assert(self.state == .string);
-        try Stringify.encodeJsonStringChars(frag, .{}, sfy.writer);
-    }
-
-    fn stringEnd(self: *Self, frag: []const u8) !void {
-        const sfy = &self.stringify;
-        try self.stringPart(frag);
-        try sfy.writer.writeByte('"');
-        sfy.endWriteRaw();
-        self.state = .init;
-    }
-
-    fn numberPart(self: *Self, frag: []const u8) !void {
-        const sfy = &self.stringify;
-        if (self.state == .init) {
-            try sfy.beginWriteRaw();
-            self.state = .number;
-        }
-        assert(self.state == .number);
-        try sfy.writer.writeAll(frag);
-    }
-
-    fn numberEnd(self: *Self, frag: []const u8) !void {
-        const sfy = &self.stringify;
-        try self.numberPart(frag);
-        sfy.endWriteRaw();
-        self.state = .init;
-    }
-
     fn pump(self: *Self) !Scanner.Token {
         const r = self.reader;
-        print("peeking...\n", .{});
         const got = try r.readSliceShort(&self.foo);
         if (got == 0) {
             self.scanner.endInput();
@@ -104,15 +66,52 @@ const JsonFilter = struct {
         try sfy.endArray();
     }
 
+    fn echoPartialAfterToken(self: *Self, tok: Scanner.Token) anyerror!void {
+        const sfy = &self.stringify;
+        var ntok = tok;
+        blk: while (true) : (ntok = try self.next()) {
+            switch (ntok) {
+                .partial_number, .partial_string => |str| try sfy.writer.writeAll(str),
+                .partial_string_escaped_1 => |str| try sfy.writer.writeAll(&str),
+                .partial_string_escaped_2 => |str| try sfy.writer.writeAll(&str),
+                .partial_string_escaped_3 => |str| try sfy.writer.writeAll(&str),
+                .partial_string_escaped_4 => |str| try sfy.writer.writeAll(&str),
+                .string, .number => |str| {
+                    try sfy.writer.writeAll(str);
+                    break :blk;
+                },
+                else => unreachable,
+            }
+        }
+    }
+
     fn echoObject(self: *Self) anyerror!void {
         const sfy = &self.stringify;
         var tok = try self.next();
         try sfy.beginObject();
         while (tok != .object_end) : (tok = try self.next()) {
-            try self.echoAfterToken(tok);
+            try sfy.beginObjectFieldRaw();
+            try self.echoPartialAfterToken(tok);
+            sfy.endObjectFieldRaw();
             try self.echoAfterToken(try self.next());
         }
         try sfy.endObject();
+    }
+
+    fn echoStringAfterToken(self: *Self, tok: Scanner.Token) !void {
+        const sfy = &self.stringify;
+        try sfy.beginWriteRaw();
+        try sfy.writer.writeByte('"');
+        try self.echoPartialAfterToken(tok);
+        try sfy.writer.writeByte('"');
+        sfy.endWriteRaw();
+    }
+
+    fn echoRawAfterToken(self: *Self, tok: Scanner.Token) !void {
+        const sfy = &self.stringify;
+        try sfy.beginWriteRaw();
+        try self.echoPartialAfterToken(tok);
+        sfy.endWriteRaw();
     }
 
     fn echoAfterToken(self: *Self, tok: Scanner.Token) !void {
@@ -127,40 +126,17 @@ const JsonFilter = struct {
             .array_begin => try self.echoArray(),
             .object_begin => try self.echoObject(),
 
-            .partial_string => |str| try self.stringPart(str),
-            .partial_string_escaped_1 => |str| try self.stringPart(&str),
-            .partial_string_escaped_2 => |str| try self.stringPart(&str),
-            .partial_string_escaped_3 => |str| try self.stringPart(&str),
-            .partial_string_escaped_4 => |str| try self.stringPart(&str),
-            .string => |str| try self.stringEnd(str),
+            .partial_number, .number => try self.echoRawAfterToken(tok),
 
-            .partial_number => |num| try self.numberPart(num),
-            .number => |num| try self.numberEnd(num),
+            .partial_string => try self.echoStringAfterToken(tok),
+            .partial_string_escaped_1 => try self.echoStringAfterToken(tok),
+            .partial_string_escaped_2 => try self.echoStringAfterToken(tok),
+            .partial_string_escaped_3 => try self.echoStringAfterToken(tok),
+            .partial_string_escaped_4 => try self.echoStringAfterToken(tok),
+            .string => try self.echoStringAfterToken(tok),
+
             else => unreachable,
         }
-    }
-
-    fn addToPath(self: *Self, frag: []const u8) !void {
-        try self.path.appendSlice(self.gpa, frag);
-        print("path: {s}\n", .{self.path.items});
-    }
-
-    fn finishPath(self: *Self, frag: []const u8) !void {
-        switch (self.scan_state) {
-            .scan_key => {
-                try self.addToPath(frag);
-                if (std.mem.eql(u8, self.prefix, self.path.items)) {
-                    try self.echo();
-                } else {
-                    try self.scan();
-                }
-            },
-            else => {},
-        }
-    }
-
-    fn triggered(self: *Self) bool {
-        return std.mem.eql(u8, self.prefix, self.path.items);
     }
 
     fn scanArray(self: *Self) !void {
@@ -175,11 +151,15 @@ const JsonFilter = struct {
         }
     }
 
+    fn addToPath(self: *Self, frag: []const u8) !void {
+        try self.path.appendSlice(self.gpa, frag);
+    }
+
     fn scanKeyAfterToken(self: *Self, tok: Scanner.Token) !void {
         try self.path.append(self.gpa, '.');
-        var nt = tok;
-        key: while (true) : (nt = try self.next()) {
-            switch (nt) {
+        var ntok = tok;
+        key: while (true) : (ntok = try self.next()) {
+            switch (ntok) {
                 .partial_string => |frag| try self.addToPath(frag),
                 .partial_string_escaped_1 => |frag| try self.addToPath(&frag),
                 .partial_string_escaped_2 => |frag| try self.addToPath(&frag),
@@ -205,16 +185,18 @@ const JsonFilter = struct {
     }
 
     fn afterToken(self: *Self, tok: Scanner.Token) anyerror!void {
-        if (self.triggered())
-            try self.echoAfterToken(tok)
-        else
+        if (std.mem.eql(u8, self.prefix, self.path.items)) {
+            try self.echoAfterToken(tok);
+            try self.stringify.writer.writeByte('\n');
+        } else {
             try self.scanAfterToken(tok);
+        }
     }
 
     fn scanAfterToken(self: *Self, tok: Scanner.Token) !void {
-        var nt = tok;
-        blk: while (true) : (nt = try self.next()) {
-            switch (nt) {
+        var ntok = tok;
+        blk: while (true) : (ntok = try self.next()) {
+            switch (ntok) {
                 .null, .false, .true => break :blk,
                 .partial_string => {},
                 .partial_string_escaped_1 => {},
@@ -250,7 +232,12 @@ pub fn main(init: std.process.Init) !void {
     var writer = std.Io.File.stdout().writer(init.io, &w_buf);
     var reader = std.Io.File.stdin().reader(init.io, &r_buf);
 
-    var filt = JsonFilter.init(init.gpa, &reader.interface, &writer.interface, "");
+    const args = try init.minimal.args.toSlice(init.gpa);
+    defer init.gpa.free(args);
+
+    var filt = JsonFilter.init(init.gpa, &reader.interface, &writer.interface, args[1]);
     defer filt.deinit();
     try filt.scan();
+
+    try writer.interface.flush();
 }
