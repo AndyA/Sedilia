@@ -3,10 +3,10 @@ let buf = new Uint8Array(0);
 async function processBinaryStream(stream) {
   for await (const chunk of stream) {
     // Append chunk to buffer
-    const newBuf = new Uint8Array(buf.length + chunk.length);
-    newBuf.set(buf);
-    newBuf.set(chunk, buf.length);
-    buf = newBuf;
+    const nextBuf = new Uint8Array(buf.length + chunk.length);
+    nextBuf.set(buf);
+    nextBuf.set(chunk, buf.length);
+    buf = nextBuf;
 
     const result = Bun.JSONL.parseChunk(buf);
 
