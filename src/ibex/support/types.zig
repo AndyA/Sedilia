@@ -68,7 +68,7 @@ pub const IbexError = error{
     BufferUnderrun,
     TypeMismatch,
     ArraySizeMismatch,
-    UnknownKey,
+    UnknownField,
     MissingKeys,
     WriteFailed,
     DuplicateKey,

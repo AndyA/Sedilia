@@ -61,7 +61,7 @@ fn objectProxy(comptime T: type) type {
                     @field(self.obj, fields[i].name) =
                         try rdr.read(fields[i].type);
                 },
-                else => return IbexError.UnknownKey,
+                else => return IbexError.UnknownField,
             }
         }
 
@@ -289,7 +289,7 @@ pub fn readAfterTag(self: *Self, comptime T: type, tag: IbexTag) IbexError!T {
                     if (try prox.lookupKey(self)) |idx| {
                         try prox.readField(self, idx);
                     } else if (self.opt.strict_keys) {
-                        return IbexError.UnknownKey;
+                        return IbexError.UnknownField;
                     } else {
                         try skipper.skip(&self.r);
                     }

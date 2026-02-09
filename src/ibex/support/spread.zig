@@ -1,8 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-// In this context a spread is a struct that includes a field called `rest` of type
-// []const u8
+fn isSpread(comptime T: type) bool {
+    return @hasDecl(T, "REST");
+}
 
 fn spreadProxy(comptime T: type) type {
     return struct {
@@ -12,7 +13,7 @@ fn spreadProxy(comptime T: type) type {
 
         const part_ix: usize = blk: {
             for (fields, 0..) |f, i| {
-                if (std.mem.eql(u8, "rest", f.name)) {
+                if (std.mem.eql(u8, T.REST, f.name)) {
                     if (f.type != []const u8)
                         @compileError("part field must be a []const u8");
                     break :blk i;
@@ -42,6 +43,7 @@ fn spreadProxy(comptime T: type) type {
 
 test spreadProxy {
     const CouchDoc = struct {
+        pub const REST = "rest";
         _id: []const u8,
         _rev: ?[]const u8,
         _deleted: ?bool,
