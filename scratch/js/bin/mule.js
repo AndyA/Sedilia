@@ -18,7 +18,7 @@ const viewMap = function (doc) {
       doc.mcc_cdc.object_type,
       source,
     ],
-    1
+    1,
   );
 };
 
