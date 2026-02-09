@@ -10,9 +10,8 @@ const JsonFilter = struct {
     const Self = @This();
 
     gpa: Allocator,
-    reader: *std.Io.Reader,
+    reader: Scanner.Reader,
     writer: *std.Io.Writer,
-    scanner: Scanner,
     stringify: Stringify = undefined,
     prefix: []const u8,
     foo: [128 * 1024]u8 = undefined,
@@ -27,9 +26,8 @@ const JsonFilter = struct {
     ) Self {
         return Self{
             .gpa = gpa,
-            .reader = reader,
+            .reader = Scanner.Reader.init(gpa, reader),
             .writer = writer,
-            .scanner = Scanner.initStreaming(gpa),
             // .stringify = Stringify{ .writer = writer },
             .prefix = prefix,
         };
@@ -37,25 +35,11 @@ const JsonFilter = struct {
 
     pub fn deinit(self: *Self) void {
         self.path.deinit(self.gpa);
-        self.scanner.deinit();
-    }
-
-    fn pump(self: *Self) !Scanner.Token {
-        const r = self.reader;
-        const got = try r.readSliceShort(&self.foo);
-        if (got == 0) {
-            self.scanner.endInput();
-        } else {
-            self.scanner.feedInput(&self.foo);
-        }
-        return self.scanner.next();
+        self.reader.deinit();
     }
 
     fn next(self: *Self) !Scanner.Token {
-        return self.scanner.next() catch |e| switch (e) {
-            error.BufferUnderrun => self.pump(),
-            else => e,
-        };
+        return try self.reader.next();
     }
 
     fn echoArray(self: *Self) anyerror!void {
@@ -230,16 +214,6 @@ const JsonFilter = struct {
                 },
                 else => unreachable,
             }
-        }
-    }
-
-    pub fn transform_doesnt_work(self: *Self) !void {
-        var tok = try self.next();
-        while (tok != .end_of_document) : (tok = try self.next()) {
-            print("tok={any}\n", .{tok});
-            self.path.items.len = 0;
-            try self.path.append(self.gpa, '$');
-            try self.walkAfterToken(tok);
         }
     }
 
