@@ -60,6 +60,14 @@ pub const ReaderIterator = struct {
         }
     }
 
+    fn makeReader(self: *Self, feed: []const u8) !Scanner.Reader {
+        const rdr = try self.gpa.create(Scanner.Reader);
+        rdr.* = .init(self.gpa, self.reader);
+        rdr.scanner.feedInput(feed);
+        self.previous = rdr;
+        return rdr;
+    }
+
     pub fn next(self: *Self) !?*Scanner.Reader {
         if (self.previous) |prev| {
             defer {
@@ -77,13 +85,8 @@ pub const ReaderIterator = struct {
 
             // If there's anything left feed it to the next scanner
             const residue = self.tail();
-            if (residue.len > 0) {
-                const rdr = try self.gpa.create(Scanner.Reader);
-                rdr.* = .init(self.gpa, self.reader);
-                rdr.scanner.feedInput(residue);
-                self.previous = rdr;
-                return rdr;
-            }
+            if (residue.len > 0)
+                return self.makeReader(residue);
         }
 
         if (!try self.moreDocuments()) {
@@ -91,10 +94,7 @@ pub const ReaderIterator = struct {
             return null;
         }
 
-        const rdr = try self.gpa.create(Scanner.Reader);
-        rdr.* = .init(self.gpa, self.reader);
-        self.previous = rdr;
-        return rdr;
+        return self.makeReader("");
     }
 };
 
