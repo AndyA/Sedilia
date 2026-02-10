@@ -46,6 +46,8 @@ fn spreadProxy(comptime T: type) type {
             break :blk .initComptime(kvs);
         };
 
+        pub const FieldNames = ix.keys();
+
         const init_seen = blk: {
             var set: [fields.len]bool = @splat(false);
             set[part_ix] = true;
@@ -151,16 +153,16 @@ pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
     return proxy.obj;
 }
 
-test parseSpread {
-    const CouchDoc = struct {
-        pub const REST = "rest";
-        _id: []const u8,
-        _rev: ?[]const u8,
-        _deleted: ?bool,
-        rest: []const u8,
-    };
+const CouchDoc = struct {
+    pub const REST = "rest";
+    _id: []const u8,
+    _rev: ?[]const u8,
+    _deleted: ?bool,
+    rest: []const u8,
+};
 
-    const TestCase = struct { json: []const u8, doc: CouchDoc };
+const TestCase = struct { json: []const u8, doc: CouchDoc };
+test parseSpread {
     const cases = &[_]TestCase{.{ .json =
         \\{ 
         \\  "_id": "peb673391", 
@@ -180,7 +182,53 @@ test parseSpread {
     }
 }
 
-pub fn stringifySpread(partial: anytype, writer: std.Io.Writer) !void {
-    _ = partial;
-    _ = writer;
+pub fn stringifySpread(spread: anytype, writer: *std.Io.Writer) !void {
+    const T = @TypeOf(spread);
+    assert(isSpread(T));
+    const fields = @typeInfo(T).@"struct".fields;
+    const rest_field = T.REST;
+    var stringify: Stringify = .{ .writer = writer };
+
+    try stringify.beginObject();
+
+    var need_comma = false;
+
+    inline for (fields) |f| {
+        if (!std.mem.eql(u8, rest_field, f.name)) {
+            const value = @field(spread, f.name);
+            if (@typeInfo(f.type) != .optional or value != null) {
+                try stringify.objectField(f.name);
+                try stringify.write(value);
+                need_comma = true;
+            }
+        }
+    }
+
+    // Abandon stringify now and write directly
+
+    const rest = @field(spread, rest_field);
+    if (rest.len > 2) {
+        if (need_comma)
+            try writer.writeByte(',');
+        try writer.writeAll(rest[1 .. rest.len - 1]);
+    }
+    try writer.writeByte('}');
+}
+
+test stringifySpread {
+    const gpa = std.testing.allocator;
+    const cases = &[_]TestCase{.{ .json =
+        \\{"_id":"peb673391","_deleted":true,"title":"Hello, World!\n","tags":["zig","rocks","couchdb"]}
+    , .doc = .{ ._id = "peb673391", ._deleted = true, ._rev = null, .rest =
+        \\{"title":"Hello, World!\n","tags":["zig","rocks","couchdb"]}
+    } }};
+    for (cases) |tc| {
+        var writer: std.Io.Writer.Allocating = .init(gpa);
+        defer writer.deinit();
+        try stringifySpread(tc.doc, &writer.writer);
+        const got = try writer.toOwnedSlice();
+        defer gpa.free(got);
+        // print("got: {s}\n", .{got});
+        try std.testing.expectEqualDeep(tc.json, got);
+    }
 }
