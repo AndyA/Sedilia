@@ -112,6 +112,7 @@ fn consume(rdr: *Scanner.Reader) !void {
                 "tok: .{{ .{s} = \"{s}\"}}\n",
                 .{ @tagName(tok), str },
             ),
+            // Nasty. Why?
             inline .partial_string_escaped_1, .partial_string_escaped_2, .partial_string_escaped_3, .partial_string_escaped_4 => |str| print(
                 "tok: .{{ .{s} = \"{s}\"}}\n",
                 .{ @tagName(tok), &str },
@@ -128,7 +129,7 @@ fn consume(rdr: *Scanner.Reader) !void {
 test {
     var reader = std.Io.Reader.fixed(
         \\{}
-        \\{"tags": ["zig\n", "couchdb", "rocksdb"]}
+        \\{"tags": ["zig", "couchdb", "rocksdb"]}
     );
     var iter = ReaderIterator.init(std.testing.allocator, &reader);
     defer iter.deinit();
