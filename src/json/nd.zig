@@ -86,10 +86,10 @@ pub const ReaderIterator = struct {
             }
         }
 
-        self.previous = null;
-
-        if (!try self.moreDocuments())
+        if (!try self.moreDocuments()) {
+            self.previous = null;
             return null;
+        }
 
         const rdr = try self.gpa.create(Scanner.Reader);
         rdr.* = .init(self.gpa, self.reader);
