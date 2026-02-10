@@ -60,12 +60,16 @@ pub const ReaderIterator = struct {
         }
     }
 
-    fn makeReader(self: *Self, feed: []const u8) !Scanner.Reader {
+    fn makeReader(self: *Self, feed: []const u8) !*Scanner.Reader {
         const rdr = try self.gpa.create(Scanner.Reader);
         rdr.* = .init(self.gpa, self.reader);
         rdr.scanner.feedInput(feed);
         self.previous = rdr;
         return rdr;
+    }
+
+    fn isFinished(scanner: *const Scanner) bool {
+        return scanner.state == .post_value and scanner.stackHeight() == 0;
     }
 
     pub fn next(self: *Self) !?*Scanner.Reader {
@@ -75,24 +79,23 @@ pub const ReaderIterator = struct {
                 self.gpa.destroy(prev);
             }
 
-            assert(prev.scanner.state == .post_value);
-
-            // If the previous scanner hit the end of input we're done
-            if (prev.scanner.is_end_of_input) {
-                self.previous = null;
-                return null;
-            }
+            assert(isFinished(&prev.scanner));
 
             // If there's anything left feed it to the next scanner
             const residue = self.tail();
             if (residue.len > 0)
                 return self.makeReader(residue);
+
+            self.previous = null;
+
+            // If the previous scanner hit the end of input we're done
+            if (prev.scanner.is_end_of_input)
+                return null;
         }
 
-        if (!try self.moreDocuments()) {
-            self.previous = null;
+        // Advance past whitespace, commas and check we're not EOF.
+        if (!try self.moreDocuments())
             return null;
-        }
 
         return self.makeReader("");
     }
