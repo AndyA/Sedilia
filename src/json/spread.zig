@@ -111,14 +111,12 @@ fn spreadProxy(comptime T: type) type {
     };
 }
 
-pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
+pub fn parseFromScanner(comptime T: type, gpa: Allocator, scanner: anytype) !T {
     assert(isSpread(T));
     var arena: std.heap.ArenaAllocator = .init(gpa);
     defer arena.deinit();
     const tmp_gpa = arena.allocator();
 
-    var scanner: Scanner = .initCompleteInput(tmp_gpa, json);
-    defer scanner.deinit();
     var proxy: spreadProxy(T) = .{};
 
     var writer: std.Io.Writer.Allocating = .init(gpa);
@@ -134,10 +132,10 @@ pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
         switch (tok) {
             .string, .allocated_string => |field| {
                 if (proxy.lookupField(field)) |idx| {
-                    try proxy.setField(idx, gpa, &scanner);
+                    try proxy.setField(idx, gpa, scanner);
                 } else {
                     try stringify.objectField(field);
-                    try Json.cleanJson(tmp_gpa, &scanner, &stringify);
+                    try Json.cleanJson(tmp_gpa, scanner, &stringify);
                 }
                 if (tok == .allocated_string)
                     tmp_gpa.free(field);
@@ -151,6 +149,12 @@ pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
     proxy.setRest(try writer.toOwnedSlice());
 
     return proxy.obj;
+}
+
+pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
+    var scanner: Scanner = .initCompleteInput(gpa, json);
+    defer scanner.deinit();
+    return parseFromScanner(T, gpa, &scanner);
 }
 
 const CouchDoc = struct {
