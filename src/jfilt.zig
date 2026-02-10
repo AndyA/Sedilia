@@ -14,8 +14,6 @@ const JsonFilter = struct {
     writer: *std.Io.Writer,
     stringify: Stringify = undefined,
     prefix: []const u8,
-    foo: [128 * 1024]u8 = undefined,
-
     path: std.ArrayList(u8) = .empty,
 
     pub fn init(

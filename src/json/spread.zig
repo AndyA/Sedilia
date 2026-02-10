@@ -1,21 +1,31 @@
 const std = @import("std");
+
+const assert = std.debug.assert;
+const print = std.debug.print;
+
 const Allocator = std.mem.Allocator;
+
+const Stringify = std.json.Stringify;
+const Scanner = std.json.Scanner;
+
+const Json = @import("../ibex/Json.zig");
 
 fn isSpread(comptime T: type) bool {
     return @hasDecl(T, "REST");
 }
 
 fn spreadProxy(comptime T: type) type {
+    assert(isSpread(T));
     return struct {
+        const Self = @This();
         const fields = @typeInfo(T).@"struct".fields;
         const SetType = @Int(.unsigned, fields.len);
-        const Self = @This();
 
         const part_ix: usize = blk: {
             for (fields, 0..) |f, i| {
                 if (std.mem.eql(u8, T.REST, f.name)) {
                     if (f.type != []const u8)
-                        @compileError("part field must be a []const u8");
+                        @compileError("part field must be a []const u8]");
                     break :blk i;
                 }
             }
@@ -36,12 +46,112 @@ fn spreadProxy(comptime T: type) type {
             break :blk .initComptime(kvs);
         };
 
-        seen: SetType = 1 << part_ix,
+        const init_seen = blk: {
+            var set: [fields.len]bool = @splat(false);
+            set[part_ix] = true;
+            break :blk set;
+        };
+
+        seen: [fields.len]bool = init_seen,
         obj: T = undefined,
+
+        pub fn setDefaults(self: *Self) !void {
+            inline for (fields, 0..) |f, i| {
+                if (!self.seen[i]) {
+                    if (f.defaultValue()) |*dv|
+                        @field(self.obj, f.name) = dv.*
+                    else if (@typeInfo(f.type) == .optional)
+                        @field(self.obj, f.name) = null
+                    else
+                        return error.MissingField;
+                }
+            }
+        }
+
+        fn parseField(
+            comptime idx: usize,
+            gpa: Allocator,
+            source: anytype,
+        ) std.json.ParseError(@TypeOf(source.*))!fields[idx].type {
+            const options: std.json.ParseOptions = .{
+                .max_value_len = std.json.default_max_value_len,
+                .allocate = .alloc_if_needed,
+            };
+            return try std.json.innerParse(fields[idx].type, gpa, source, options);
+        }
+
+        pub fn setField(
+            self: *Self,
+            idx: usize,
+            gpa: Allocator,
+            source: anytype,
+        ) std.json.ParseError(@TypeOf(source.*))!void {
+            switch (idx) {
+                inline 0...fields.len - 1 => |i| {
+                    if (i != part_ix) {
+                        if (self.seen[i])
+                            return error.DuplicateField;
+                        self.seen[i] = true;
+                        @field(self.obj, fields[i].name) = try parseField(i, gpa, source);
+                    }
+                },
+                else => unreachable,
+            }
+        }
+
+        pub fn setRest(self: *Self, json: []const u8) void {
+            @field(self.obj, T.REST) = json;
+        }
+
+        pub fn lookupField(_: *const Self, name: []const u8) ?usize {
+            return ix.get(name);
+        }
     };
 }
 
-test spreadProxy {
+pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
+    assert(isSpread(T));
+    var arena: std.heap.ArenaAllocator = .init(gpa);
+    defer arena.deinit();
+    const tmp_gpa = arena.allocator();
+
+    var scanner: Scanner = .initCompleteInput(tmp_gpa, json);
+    defer scanner.deinit();
+    var proxy: spreadProxy(T) = .{};
+
+    var writer: std.Io.Writer.Allocating = .init(gpa);
+    errdefer writer.deinit();
+    var stringify: Stringify = .{ .writer = &writer.writer };
+    try stringify.beginObject();
+
+    if (try scanner.next() != .object_begin)
+        return error.UnexpectedToken;
+
+    var tok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+    while (tok != .object_end) : (tok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed)) {
+        switch (tok) {
+            .string, .allocated_string => |field| {
+                if (proxy.lookupField(field)) |idx| {
+                    try proxy.setField(idx, gpa, &scanner);
+                } else {
+                    try stringify.objectField(field);
+                    try Json.cleanJson(tmp_gpa, &scanner, &stringify);
+                }
+                if (tok == .allocated_string)
+                    tmp_gpa.free(field);
+            },
+            else => return error.UnexpectedToken,
+        }
+    }
+
+    try proxy.setDefaults();
+    try stringify.endObject();
+    proxy.setRest(try writer.toOwnedSlice());
+
+    return proxy.obj;
+}
+
+test parseSpread {
     const CouchDoc = struct {
         pub const REST = "rest";
         _id: []const u8,
@@ -50,13 +160,24 @@ test spreadProxy {
         rest: []const u8,
     };
 
-    const prox = spreadProxy(CouchDoc){};
-    try std.testing.expectEqual(8, prox.seen);
-}
+    const TestCase = struct { json: []const u8, doc: CouchDoc };
+    const cases = &[_]TestCase{.{ .json =
+        \\{ 
+        \\  "_id": "peb673391", 
+        \\  "title": "Hello, World!\n", 
+        \\  "_deleted": true,
+        \\  "tags": ["zig", "rocks", "couchdb"]
+        \\}
+    , .doc = .{ ._id = "peb673391", ._deleted = true, ._rev = null, .rest =
+        \\{"title":"Hello, World!\n","tags":["zig","rocks","couchdb"]}
+    } }};
 
-pub fn parseSpread(comptime T: type, gpa: Allocator, json: []const u8) !T {
-    _ = gpa;
-    _ = json;
+    for (cases) |tc| {
+        var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
+        defer arena.deinit();
+        const doc = try parseSpread(CouchDoc, arena.allocator(), tc.json);
+        try std.testing.expectEqualDeep(tc.doc, doc);
+    }
 }
 
 pub fn stringifySpread(partial: anytype, writer: std.Io.Writer) !void {

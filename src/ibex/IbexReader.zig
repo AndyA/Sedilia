@@ -76,7 +76,7 @@ fn objectProxy(comptime T: type) type {
                     else if (@typeInfo(f.type) == .optional)
                         @field(self.obj, f.name) = null
                     else
-                        return IbexError.MissingKeys;
+                        return IbexError.MissingField;
                 }
             }
 

@@ -215,81 +215,60 @@ pub fn readFromIbex(r: *IbexReader, tag: IbexTag) IbexError!Json {
 
 const bytes = @import("./support/bytes.zig");
 
-const JsonCleaner = struct {
-    const Self = @This();
+pub fn cleanJsonAfterToken(
+    tmp_gpa: Allocator,
     scanner: *Scanner,
     stringify: *Stringify,
-    state: enum { INIT, STRING, NUMBER } = .INIT,
-
-    fn stringPart(self: *Self, frag: []const u8) IbexError!void {
-        const sfy = self.stringify;
-        if (self.state == .INIT) {
-            try sfy.beginWriteRaw();
-            try sfy.writer.writeByte('"');
-            self.state = .STRING;
-        }
-        assert(self.state == .STRING);
-        try Stringify.encodeJsonStringChars(frag, .{}, sfy.writer);
-    }
-
-    fn stringEnd(self: *Self, frag: []const u8) IbexError!void {
-        const sfy = self.stringify;
-        try self.stringPart(frag);
-        try sfy.writer.writeByte('"');
-        sfy.endWriteRaw();
-        self.state = .INIT;
-    }
-
-    fn numberPart(self: *Self, frag: []const u8) IbexError!void {
-        const sfy = self.stringify;
-        if (self.state == .INIT) {
-            try sfy.beginWriteRaw();
-            self.state = .NUMBER;
-        }
-        assert(self.state == .NUMBER);
-        try sfy.writer.writeAll(frag);
-    }
-
-    fn numberEnd(self: *Self, frag: []const u8) IbexError!void {
-        const sfy = self.stringify;
-        try self.numberPart(frag);
-        sfy.endWriteRaw();
-        self.state = .INIT;
-    }
-
-    pub fn transform(self: *Self) IbexError!void {
-        const sfy = self.stringify;
-        doc: while (true) {
-            const tok = try self.scanner.next();
-            // print("{any}\n", .{tok});
-            switch (tok) {
-                .end_of_document => break :doc,
-
-                .null => try sfy.write(null),
-                .false => try sfy.write(false),
-                .true => try sfy.write(true),
-
-                .array_begin => try sfy.beginArray(),
-                .array_end => try sfy.endArray(),
-                .object_begin => try sfy.beginObject(),
-                .object_end => try sfy.endObject(),
-
-                .partial_string => |str| try self.stringPart(str),
-                .partial_string_escaped_1 => |str| try self.stringPart(&str),
-                .partial_string_escaped_2 => |str| try self.stringPart(&str),
-                .partial_string_escaped_3 => |str| try self.stringPart(&str),
-                .partial_string_escaped_4 => |str| try self.stringPart(&str),
-                .string => |str| try self.stringEnd(str),
-
-                .partial_number => |num| try self.numberPart(num),
-                .number => |num| try self.numberEnd(num),
-                else => unreachable,
+    tok: Scanner.Token,
+) IbexError!void {
+    switch (tok) {
+        .null => try stringify.write(null),
+        .false => try stringify.write(false),
+        .true => try stringify.write(true),
+        .string, .allocated_string => |str| {
+            try stringify.write(str);
+            if (tok == .allocated_string)
+                tmp_gpa.free(str);
+        },
+        .number, .allocated_number => |num| {
+            try stringify.beginWriteRaw();
+            try stringify.writer.writeAll(num);
+            stringify.endWriteRaw();
+            if (tok == .allocated_string)
+                tmp_gpa.free(num);
+        },
+        .array_begin => {
+            try stringify.beginArray();
+            var ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+            while (ntok != .array_end) {
+                try cleanJsonAfterToken(tmp_gpa, scanner, stringify, ntok);
+                ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
             }
-        }
-
-        assert(self.state == .INIT);
+            try stringify.endArray();
+        },
+        .object_begin => {
+            try stringify.beginObject();
+            var ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+            while (ntok != .object_end) {
+                switch (ntok) {
+                    .string, .allocated_string => |field| {
+                        try stringify.objectField(field);
+                        try cleanJson(tmp_gpa, scanner, stringify);
+                    },
+                    else => return error.SyntaxError,
+                }
+                ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+            }
+            try stringify.endObject();
+        },
+        else => unreachable,
     }
-};
+}
+
+pub fn cleanJson(tmp_gpa: Allocator, scanner: *Scanner, stringify: *Stringify) IbexError!void {
+    const tok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+    try cleanJsonAfterToken(tmp_gpa, scanner, stringify, tok);
+}
 
 const WritingTransform = fn (Allocator, []const u8, *std.Io.Writer) IbexError!void;
 const AllocatingTransform = fn (Allocator, []const u8) IbexError![]const u8;
@@ -315,8 +294,9 @@ pub fn jsonToJson(gpa: Allocator, json: []const u8, writer: *std.Io.Writer) Ibex
     var scanner: Scanner = .initCompleteInput(arena.allocator(), json);
     defer scanner.deinit();
     var stringify = Stringify{ .writer = writer };
-    var cleaner = JsonCleaner{ .scanner = &scanner, .stringify = &stringify };
-    try cleaner.transform();
+    try cleanJson(arena.allocator(), &scanner, &stringify);
+    // var cleaner = JsonCleaner{ .scanner = &scanner, .stringify = &stringify };
+    // try cleaner.transform();
 }
 
 pub fn jsonToJsonAllocating(gpa: Allocator, json: []const u8) IbexError![]const u8 {
@@ -344,6 +324,14 @@ test jsonToJson {
     const cases = &[_]TestCase{
         .{ .input = "null", .want = "null" },
         .{ .input = "[1, false, \"Hello\"]", .want = "[1,false,\"Hello\"]" },
+        .{ .input =
+        \\{ 
+        \\  "a": false,
+        \\  "tags": ["zig", "rocksdb", "couchdb"]
+        \\}
+        , .want =
+        \\{"a":false,"tags":["zig","rocksdb","couchdb"]}
+        },
     };
 
     try testTransform(gpa, jsonToJsonAllocating, cases);

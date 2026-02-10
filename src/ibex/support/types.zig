@@ -69,7 +69,8 @@ pub const IbexError = error{
     TypeMismatch,
     ArraySizeMismatch,
     UnknownField,
-    MissingKeys,
+    MissingField,
     WriteFailed,
     DuplicateKey,
+    ValueTooLong,
 };
