@@ -18,6 +18,7 @@ pub const ByteReader = struct {
         return Self{ .buf = self.tail(), .flip = self.flip };
     }
 
+    /// At end of buffer?
     pub fn eof(self: *const Self) bool {
         assert(self.pos <= self.buf.len);
         return self.pos == self.buf.len;
