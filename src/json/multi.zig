@@ -108,7 +108,13 @@ fn consume(rdr: *Scanner.Reader) !void {
         const tok = try rdr.next();
         switch (tok) {
             .end_of_document => unreachable,
-            .string, .partial_string => |str| print(
+            .number, .partial_number => |str| print(
+                "tok: .{{ .{s} = {s}}}\n",
+                .{ @tagName(tok), str },
+            ),
+            .string,
+            .partial_string,
+            => |str| print(
                 "tok: .{{ .{s} = \"{s}\"}}\n",
                 .{ @tagName(tok), str },
             ),
@@ -132,7 +138,7 @@ fn consume(rdr: *Scanner.Reader) !void {
 test {
     var reader = std.Io.Reader.fixed(
         \\{}
-        \\{"tags": ["zig", "couchdb", "rocksdb"]}
+        \\{"tags": ["zig", "couchdb", "rocksdb", 123]}
     );
     var iter = ReaderIterator.init(std.testing.allocator, &reader);
     defer iter.deinit();
