@@ -11,6 +11,8 @@ const Scanner = std.json.Scanner;
 pub const ReaderIterator = struct {
     const Self = @This();
 
+    // TODO diagnostics
+
     gpa: Allocator,
     reader: *std.Io.Reader,
     previous: ?*Scanner.Reader = null,
@@ -104,10 +106,17 @@ pub const ReaderIterator = struct {
 fn consume(rdr: *Scanner.Reader) !void {
     while (true) {
         const tok = try rdr.next();
-        print("tok: {any}\n", .{tok});
         switch (tok) {
             .end_of_document => unreachable,
-            else => {},
+            .string, .partial_string => |str| print(
+                "tok: .{{ .{s} = \"{s}\"}}\n",
+                .{ @tagName(tok), str },
+            ),
+            inline .partial_string_escaped_1, .partial_string_escaped_2, .partial_string_escaped_3, .partial_string_escaped_4 => |str| print(
+                "tok: .{{ .{s} = \"{s}\"}}\n",
+                .{ @tagName(tok), &str },
+            ),
+            else => print("tok: {any}\n", .{tok}),
         }
         if (rdr.stackHeight() == 0)
             break;
@@ -119,7 +128,7 @@ fn consume(rdr: *Scanner.Reader) !void {
 test {
     var reader = std.Io.Reader.fixed(
         \\{}
-        \\{"tags": ["zig", "couchdb", "rocksdb"]}
+        \\{"tags": ["zig\n", "couchdb", "rocksdb"]}
     );
     var iter = ReaderIterator.init(std.testing.allocator, &reader);
     defer iter.deinit();
