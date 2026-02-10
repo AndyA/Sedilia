@@ -112,8 +112,11 @@ fn consume(rdr: *Scanner.Reader) !void {
                 "tok: .{{ .{s} = \"{s}\"}}\n",
                 .{ @tagName(tok), str },
             ),
-            // Nasty. Why?
-            inline .partial_string_escaped_1, .partial_string_escaped_2, .partial_string_escaped_3, .partial_string_escaped_4 => |str| print(
+            inline .partial_string_escaped_1,
+            .partial_string_escaped_2,
+            .partial_string_escaped_3,
+            .partial_string_escaped_4,
+            => |str| print(
                 "tok: .{{ .{s} = \"{s}\"}}\n",
                 .{ @tagName(tok), &str },
             ),
