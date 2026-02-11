@@ -58,16 +58,17 @@ pub fn main(init: std.process.Init) !void {
         const batch = rocksdb.batch.WriteBatch.init();
         defer batch.deinit();
 
-        var limit: usize = 1000;
-        while (try iter.next()) |rdr| {
-            limit -= 1;
-            count += 1;
-            if (limit == 0) break;
+        for (1..1000) |_| {
+            const rdr = try iter.next();
+            if (rdr == null) {
+                more = false;
+                break;
+            }
             var arena: std.heap.ArenaAllocator = .init(init.gpa);
             defer arena.deinit();
             const gpa = arena.allocator();
-            const doc = try spread.parseFromScanner(CouchDoc, gpa, rdr);
-            if (limit == 1)
+            const doc = try spread.parseFromScanner(CouchDoc, gpa, rdr.?);
+            if (count % 1000 == 0)
                 print("{d:>8} _id: {s:<32}\n", .{ count, doc._id });
             var writer: Io.Writer.Allocating = .init(gpa);
             defer writer.deinit();
@@ -82,8 +83,7 @@ pub fn main(init: std.process.Init) !void {
             defer gpa.free(body);
 
             batch.put(cf[0].handle, doc._id, body);
-        } else {
-            more = false;
+            count += 1;
         }
 
         try db.write(batch, &err);
