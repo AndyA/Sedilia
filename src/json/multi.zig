@@ -51,7 +51,7 @@ pub const ReaderIterator = struct {
         return "";
     }
 
-    fn moreDocuments(self: *Self) !bool {
+    fn hasMore(self: *Self) !bool {
         while (true) {
             const nc = self.reader.peekByte() catch |err| switch (err) {
                 error.EndOfStream => return false,
@@ -96,7 +96,7 @@ pub const ReaderIterator = struct {
         }
 
         // Advance past whitespace, commas and check we're not EOF.
-        if (!try self.moreDocuments())
+        if (!try self.hasMore())
             return null;
 
         return self.makeReader("");

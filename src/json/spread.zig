@@ -132,13 +132,15 @@ pub fn parseFromScanner(comptime T: type, gpa: Allocator, scanner: anytype) !T {
         switch (tok) {
             .string, .allocated_string => |field| {
                 if (proxy.lookupField(field)) |idx| {
+                    if (tok == .allocated_string)
+                        tmp_gpa.free(field);
                     try proxy.setField(idx, gpa, scanner);
                 } else {
                     try stringify.objectField(field);
+                    if (tok == .allocated_string)
+                        tmp_gpa.free(field);
                     try Json.cleanJson(tmp_gpa, scanner, &stringify);
                 }
-                if (tok == .allocated_string)
-                    tmp_gpa.free(field);
             },
             else => return error.UnexpectedToken,
         }
@@ -166,6 +168,7 @@ const CouchDoc = struct {
 };
 
 const TestCase = struct { json: []const u8, doc: CouchDoc };
+
 test parseSpread {
     const cases = &[_]TestCase{.{ .json =
         \\{ 
