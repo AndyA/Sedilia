@@ -73,4 +73,6 @@ pub const IbexError = error{
     WriteFailed,
     DuplicateKey,
     ValueTooLong,
+    EndOfStream,
+    ReadFailed,
 };

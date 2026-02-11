@@ -217,7 +217,7 @@ const bytes = @import("./support/bytes.zig");
 
 pub fn cleanJsonAfterToken(
     tmp_gpa: Allocator,
-    scanner: *Scanner,
+    source: anytype,
     stringify: *Stringify,
     tok: Scanner.Token,
 ) IbexError!void {
@@ -239,25 +239,25 @@ pub fn cleanJsonAfterToken(
         },
         .array_begin => {
             try stringify.beginArray();
-            var ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+            var ntok = try source.nextAlloc(tmp_gpa, .alloc_if_needed);
             while (ntok != .array_end) {
-                try cleanJsonAfterToken(tmp_gpa, scanner, stringify, ntok);
-                ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+                try cleanJsonAfterToken(tmp_gpa, source, stringify, ntok);
+                ntok = try source.nextAlloc(tmp_gpa, .alloc_if_needed);
             }
             try stringify.endArray();
         },
         .object_begin => {
             try stringify.beginObject();
-            var ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+            var ntok = try source.nextAlloc(tmp_gpa, .alloc_if_needed);
             while (ntok != .object_end) {
                 switch (ntok) {
                     .string, .allocated_string => |field| {
                         try stringify.objectField(field);
-                        try cleanJson(tmp_gpa, scanner, stringify);
+                        try cleanJson(tmp_gpa, source, stringify);
                     },
                     else => return error.SyntaxError,
                 }
-                ntok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
+                ntok = try source.nextAlloc(tmp_gpa, .alloc_if_needed);
             }
             try stringify.endObject();
         },
@@ -265,9 +265,13 @@ pub fn cleanJsonAfterToken(
     }
 }
 
-pub fn cleanJson(tmp_gpa: Allocator, scanner: *Scanner, stringify: *Stringify) IbexError!void {
-    const tok = try scanner.nextAlloc(tmp_gpa, .alloc_if_needed);
-    try cleanJsonAfterToken(tmp_gpa, scanner, stringify, tok);
+pub fn cleanJson(
+    tmp_gpa: Allocator,
+    source: anytype,
+    stringify: *Stringify,
+) IbexError!void {
+    const tok = try source.nextAlloc(tmp_gpa, .alloc_if_needed);
+    try cleanJsonAfterToken(tmp_gpa, source, stringify, tok);
 }
 
 const WritingTransform = fn (Allocator, []const u8, *std.Io.Writer) IbexError!void;

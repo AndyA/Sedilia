@@ -78,7 +78,7 @@ fn spreadProxy(comptime T: type) type {
         ) std.json.ParseError(@TypeOf(source.*))!fields[idx].type {
             const options: std.json.ParseOptions = .{
                 .max_value_len = std.json.default_max_value_len,
-                .allocate = .alloc_if_needed,
+                .allocate = .alloc_always,
             };
             return try std.json.innerParse(fields[idx].type, gpa, source, options);
         }

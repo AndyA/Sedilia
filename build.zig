@@ -61,6 +61,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mule_tests.step);
 
     _ = utility(b, "jfilt", target, optimize);
+    _ = utility(b, "nd-loader", target, optimize);
 
     // Benchmarks
     _ = utility(b, "bm-codec", target, optimize);
