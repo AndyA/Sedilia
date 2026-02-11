@@ -66,6 +66,7 @@ fn spreadProxy(comptime T: type) type {
                         @field(self.obj, f.name) = null
                     else
                         return error.MissingField;
+                    self.seen[i] = true;
                 }
             }
         }
