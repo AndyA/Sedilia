@@ -14,20 +14,17 @@ const IbexWriter = @import("./ibex/IbexWriter.zig");
 const bm = @import("./support/bm.zig");
 
 const CouchDoc = struct {
+    const Self = @This();
     pub const REST = "rest";
     _id: []const u8,
     _rev: ?[]const u8,
     _deleted: ?bool,
     rest: []const u8,
-};
 
-const CouchHeader = struct {
-    pub const Self = @This();
-    rev: ?[]const u8,
-    deleted: ?bool,
+    pub const Header = @Tuple(&.{ []const u8, bool });
 
-    pub fn fromDoc(doc: CouchDoc) Self {
-        return Self{ .rev = doc._rev, .deleted = doc._deleted };
+    pub fn header(self: *const Self) Header {
+        return .{ self._rev.?, self._deleted orelse false };
     }
 };
 
@@ -76,9 +73,8 @@ pub fn main(init: std.process.Init) !void {
             var writer: Io.Writer.Allocating = .init(gpa);
             defer writer.deinit();
 
-            const hdr: CouchHeader = .fromDoc(doc);
             var iw: IbexWriter = .init(&writer.writer);
-            try iw.write(hdr);
+            try iw.write(doc.header());
 
             try writer.writer.writeAll(doc.rest);
 
