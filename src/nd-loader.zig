@@ -68,8 +68,8 @@ pub fn main(init: std.process.Init) !void {
             defer arena.deinit();
             const gpa = arena.allocator();
             const doc = try spread.parseFromScanner(CouchDoc, gpa, rdr.?);
-            if (count % 1000 == 0)
-                print("{d:>8} _id: {s:<32}\n", .{ count, doc._id });
+            if (count % 10000 == 0)
+                print("{d:>10} _id: {s:<32}\n", .{ count, doc._id });
             var writer: Io.Writer.Allocating = .init(gpa);
             defer writer.deinit();
 
