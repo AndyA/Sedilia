@@ -61,7 +61,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mule_tests.step);
 
     _ = utility(b, "jfilt", target, optimize);
-    _ = utility(b, "nd-loader", target, optimize);
+    const nd_loader_exe = utility(b, "nd-loader", target, optimize);
+    nd_loader_exe.root_module.addImport("rocksdb", rdb_bindings);
 
     // Benchmarks
     _ = utility(b, "bm-codec", target, optimize);

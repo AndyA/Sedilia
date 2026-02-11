@@ -159,11 +159,12 @@ pub fn write(self: *Self, v: anytype) IbexError!void {
             } else {
                 try self.beginObject();
                 inline for (strc.fields) |fld| {
-                    if (fld.type == void) continue;
-                    if (@typeInfo(fld.type) == .optional and @field(v, fld.name) == null)
-                        continue;
-                    try self.writeString(fld.name);
-                    try self.write(@field(v, fld.name));
+                    if (fld.type != void) {
+                        if (@typeInfo(fld.type) != .optional or @field(v, fld.name) != null) {
+                            try self.writeString(fld.name);
+                            try self.write(@field(v, fld.name));
+                        }
+                    }
                 }
                 try self.endObject();
             }
