@@ -226,9 +226,9 @@ pub fn stringifySpread(spread: anytype, writer: *std.Io.Writer) !void {
 test stringifySpread {
     const gpa = std.testing.allocator;
     const cases = &[_]TestCase{.{ .json =
-        \\{"_id":"peb673391","_deleted":true,"title":"Hello, World!\n","tags":["zig","rocks","couchdb"]}
+        \\{"_id":"peb673391","_deleted":true,"title":"Hello, World!\n","tags":["zig","rocks"]}
     , .doc = .{ ._id = "peb673391", ._deleted = true, ._rev = null, .rest =
-        \\{"title":"Hello, World!\n","tags":["zig","rocks","couchdb"]}
+        \\{"title":"Hello, World!\n","tags":["zig","rocks"]}
     } }};
     for (cases) |tc| {
         var writer: std.Io.Writer.Allocating = .init(gpa);

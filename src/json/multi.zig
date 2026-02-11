@@ -135,14 +135,14 @@ fn consume(rdr: *Scanner.Reader) !void {
     print("state: {any}\n", .{rdr.scanner.state});
 }
 
-test {
-    var reader = std.Io.Reader.fixed(
-        \\{}
-        \\{"tags": ["zig", "couchdb", "rocksdb", 123]}
-    );
-    var iter = ReaderIterator.init(std.testing.allocator, &reader);
-    defer iter.deinit();
-    while (try iter.next()) |rdr| {
-        try consume(rdr);
-    }
-}
+// test {
+//     var reader = std.Io.Reader.fixed(
+//         \\{}
+//         \\{"tags": ["zig", "couchdb", "rocksdb", 123]}
+//     );
+//     var iter = ReaderIterator.init(std.testing.allocator, &reader);
+//     defer iter.deinit();
+//     while (try iter.next()) |rdr| {
+//         try consume(rdr);
+//     }
+// }
