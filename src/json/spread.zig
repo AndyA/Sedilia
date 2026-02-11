@@ -93,8 +93,8 @@ fn spreadProxy(comptime T: type) type {
                     if (i != part_ix) {
                         if (self.seen[i])
                             return error.DuplicateField;
-                        self.seen[i] = true;
                         @field(self.obj, fields[i].name) = try parseField(i, gpa, source);
+                        self.seen[i] = true;
                     }
                 },
                 else => unreachable,
