@@ -32,13 +32,16 @@ const CouchHeader = struct {
 };
 
 pub fn main(init: std.process.Init) !void {
+    const args = try init.minimal.args.toSlice(init.gpa);
+    defer init.gpa.free(args);
+
     var r_buf: [128 * 1024]u8 = undefined;
     var reader = Io.File.stdin().reader(init.io, &r_buf);
 
     var err: ?rocksdb.Data = null;
     const db, const cf = rocksdb.DB.open(
         init.gpa,
-        "tmp/pi2.db",
+        args[0],
         .{ .create_if_missing = true },
         null,
         &err,
