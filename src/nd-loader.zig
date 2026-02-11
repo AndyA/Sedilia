@@ -41,7 +41,7 @@ pub fn main(init: std.process.Init) !void {
     var err: ?rocksdb.Data = null;
     const db, const cf = rocksdb.DB.open(
         init.gpa,
-        args[0],
+        args[1],
         .{ .create_if_missing = true },
         null,
         &err,
