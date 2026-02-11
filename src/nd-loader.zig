@@ -86,6 +86,9 @@ pub fn main(init: std.process.Init) !void {
             count += 1;
         }
 
-        try db.write(batch, &err);
+        db.write(batch, &err) catch |e| {
+            std.debug.print("{s}: {s}\n", .{ @errorName(e), err.?.data });
+            return e;
+        };
     }
 }
