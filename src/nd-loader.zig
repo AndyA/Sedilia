@@ -47,7 +47,7 @@ test CouchDoc {
         ._id = "123",
         ._rev = "37-kljasdkljoilksjdla",
         ._deleted = null,
-        .rest = "",
+        .rest = "{}",
     };
     try std.testing.expectEqual(37, try doc.revision());
 }
