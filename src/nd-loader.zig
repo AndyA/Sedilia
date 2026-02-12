@@ -21,8 +21,6 @@ const CouchDoc = struct {
     _deleted: ?bool,
     rest: []const u8,
 
-    pub const Header = @Tuple(&.{ u64, bool });
-
     pub fn revision(self: *const Self) !u64 {
         if (self._rev) |rev| {
             if (std.mem.findScalar(u8, rev, '-')) |hyphen| {
@@ -36,6 +34,8 @@ const CouchDoc = struct {
     pub fn deleted(self: *const Self) bool {
         return self._deleted orelse false;
     }
+
+    pub const Header = @Tuple(&.{ u64, bool });
 
     pub fn header(self: *const Self) !Header {
         return .{ try self.revision(), self.deleted() };
