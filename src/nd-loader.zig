@@ -21,10 +21,24 @@ const CouchDoc = struct {
     _deleted: ?bool,
     rest: []const u8,
 
-    pub const Header = @Tuple(&.{ []const u8, bool });
+    pub const Header = @Tuple(&.{ u64, bool });
 
-    pub fn header(self: *const Self) Header {
-        return .{ self._rev.?, self._deleted orelse false };
+    pub fn revision(self: *const Self) !u64 {
+        if (self._rev) |rev| {
+            if (std.mem.findScalar(u8, rev, '-')) |hyphen| {
+                return try std.fmt.parseInt(u64, rev[0..hyphen], 10);
+            }
+            return error.SyntaxError;
+        }
+        return 0; // never a real rev
+    }
+
+    pub fn deleted(self: *const Self) bool {
+        return self._deleted orelse false;
+    }
+
+    pub fn header(self: *const Self) !Header {
+        return .{ try self.revision(), self.deleted() };
     }
 };
 
@@ -74,7 +88,7 @@ pub fn main(init: std.process.Init) !void {
             defer writer.deinit();
 
             var iw: IbexWriter = .init(&writer.writer);
-            try iw.write(doc.header());
+            try iw.write(try doc.header());
 
             try writer.writer.writeAll(doc.rest);
 
