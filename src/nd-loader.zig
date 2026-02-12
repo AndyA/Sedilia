@@ -42,6 +42,16 @@ const CouchDoc = struct {
     }
 };
 
+test CouchDoc {
+    const doc = CouchDoc{
+        ._id = "123",
+        ._rev = "37-kljasdkljoilksjdla",
+        ._deleted = null,
+        .rest = "",
+    };
+    try std.testing.expectEqual(37, try doc.revision());
+}
+
 pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(init.gpa);
     defer init.gpa.free(args);

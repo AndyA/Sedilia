@@ -11,4 +11,5 @@ test {
     _ = @import("./json/multi.zig");
     _ = @import("./support/bm.zig");
     _ = @import("./support/wildcard.zig");
+    _ = @import("./nd-loader.zig");
 }
