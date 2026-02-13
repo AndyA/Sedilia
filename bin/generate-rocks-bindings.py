@@ -2,7 +2,6 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "libclang>=18.1.1",
-#     "pycparser>=3.0",
 # ]
 # ///
 
@@ -77,7 +76,15 @@ def cursor_name(cursor: clang.cindex.Cursor) -> str:
 
 def with_cursor(cursor: clang.cindex.Cursor, depth=0) -> None:
     kind = cursor.kind
-    print("  " * depth + kind_name(kind) + " / " + cursor_name(cursor), end="")
+    print(
+        "  " * depth
+        + kind_name(kind)
+        + " / "
+        + cursor_name(cursor)
+        + " / "
+        + cursor.type.kind.name,
+        end="",
+    )
     type = cursor.type
     if type.kind != clang.cindex.TypeKind.INVALID:
         print(" " + type.spelling, end="")
