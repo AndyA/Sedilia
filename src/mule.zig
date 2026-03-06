@@ -49,28 +49,28 @@ const Teddy = struct {
     }
 
     // https://ziggit.dev/t/simd-is-there-an-equivalent-to-mm-shuffle-ep/2251/6
-    fn lookupX86_64(mask: Chunk, index: Chunk) Chunk {
+    fn lookupX86_64(table: Chunk, index: Chunk) Chunk {
         return asm (
-            \\vpshufb %[index], %[mask], %[out]
+            \\vpshufb %[index], %[table], %[out]
             : [out] "=x" (-> Chunk),
             : [index] "x" (index),
-              [mask] "x" (mask),
+              [table] "x" (table),
         );
     }
 
-    fn lookupAArch64(mask: Chunk, index: Chunk) Chunk {
+    fn lookupAArch64(table: Chunk, index: Chunk) Chunk {
         return asm (
-            \\tbl %[out].16b, {%[mask].16b}, %[index].16b
+            \\tbl %[out].16b, {%[table].16b}, %[index].16b
             : [out] "=&x" (-> Chunk),
             : [index] "x" (index),
-              [mask] "x" (mask),
+              [table] "x" (table),
         );
     }
 
-    fn lookup(mask: Chunk, index: Chunk) Chunk {
+    fn lookup(table: Chunk, index: Chunk) Chunk {
         return switch (builtin.cpu.arch) {
-            .aarch64, .aarch64_be => lookupAArch64(mask, index),
-            .x86_64 => lookupX86_64(mask, index),
+            .aarch64, .aarch64_be => lookupAArch64(table, index),
+            .x86_64 => lookupX86_64(table, index),
             else => @compileError("Unsupported Arch"),
         };
     }
