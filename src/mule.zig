@@ -48,7 +48,7 @@ const Teddy = struct {
         return asm (
             \\vpshufb %[mask], %[x], %[out]
             : [out] "=x" (-> Chunk),
-            : [x] "+x" (x),
+            : [x] "x" (x),
               [mask] "x" (mask),
         );
     }
