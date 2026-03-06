@@ -46,7 +46,7 @@ const Teddy = struct {
     // end from https://gist.github.com/sharpobject/80dc1b6f3aaeeada8c0e3a04ebc4b60a
     fn lookupX86(mask: Chunk, index: Chunk) Chunk {
         return asm (
-            \\vpshufb %[mask], %[index], %[out]
+            \\vpshufb %[index], %[mask], %[out]
             : [out] "=x" (-> Chunk),
             : [index] "x" (index),
               [mask] "x" (mask),
@@ -56,7 +56,7 @@ const Teddy = struct {
     // https://developer.arm.com/architectures/instruction-sets/intrinsics/vqtbl1q_s8
     fn lookupAarch64(mask: Chunk, index: Chunk) Chunk {
         return asm (
-            \\tbl  %[out].16b, {%[mask].16b}, %[index].16b
+            \\tbl %[out].16b, {%[mask].16b}, %[index].16b
             : [out] "=&x" (-> Chunk),
             : [index] "x" (index),
               [mask] "x" (mask),
