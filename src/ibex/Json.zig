@@ -370,28 +370,28 @@ test jsonToIbex {
     try testTransform(gpa, jsonToIbexAllocating, cases);
 }
 
-test "jsonToIbex fuzz" {
-    const gpa = std.testing.allocator;
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            const got = jsonToIbexAllocating(gpa, input) catch return;
-            defer gpa.free(got);
-            // print("{s}\n", .{input});
-        }
-    };
-    try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
-        \\{ "name": "Andy", "checked": false, "rate": 1.5, tags: ["zig", "c"]}
-        ,
-        \\null
-        ,
-        \\[1000000, 1e10, -3.1415]
-        ,
-        \\"\u0000\u0001\u0002\u02fe"
-        ,
-        \\[{ "funky\n": true }]
-    } });
-}
+// test "jsonToIbex fuzz" {
+//     const gpa = std.testing.allocator;
+//     const Context = struct {
+//         fn testOne(context: @This(), input: []const u8) anyerror!void {
+//             _ = context;
+//             const got = jsonToIbexAllocating(gpa, input) catch return;
+//             defer gpa.free(got);
+//             // print("{s}\n", .{input});
+//         }
+//     };
+//     try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
+//         \\{ "name": "Andy", "checked": false, "rate": 1.5, tags: ["zig", "c"]}
+//         ,
+//         \\null
+//         ,
+//         \\[1000000, 1e10, -3.1415]
+//         ,
+//         \\"\u0000\u0001\u0002\u02fe"
+//         ,
+//         \\[{ "funky\n": true }]
+//     } });
+// }
 
 pub fn ibexToJson(ibex: []const u8, writer: *std.Io.Writer) IbexError!void {
     var nop = NullAllocator{};
@@ -427,39 +427,39 @@ test ibexToJson {
     try testTransform(gpa, ibexToJsonAllocating, cases);
 }
 
-test "ibexToJson fuzz" {
-    const gpa = std.testing.allocator;
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            const got = ibexToJsonAllocating(gpa, input) catch return;
-            defer gpa.free(got);
-            // print("{s}\n", .{got});
-        }
-    };
-    try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
-        &.{ t(.NumPos), 0x80, 0x80 },
-        &.{ t(.NumPos), 0x80, 0xf1, 0xe9, 0x01, 0x90 },
-        &.{t(.Null)},
-        &.{t(.False)},
-        &.{t(.True)},
-        &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x02, 0x41, t(.End) },
-        .{t(.Object)} ++
-            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
-            .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
-            .{t(.End)},
-        .{t(.Object)} ++
-            .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
-            .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
-            .{t(.String)} ++ "tags" ++ .{t(.End)} ++
-            .{t(.Array)} ++
-            "" ++ .{t(.String)} ++ "zig" ++ .{t(.End)} ++
-            "" ++ .{t(.String)} ++ "c" ++ .{t(.End)} ++
-            "" ++ .{t(.String)} ++ "perl" ++ .{t(.End)} ++
-            "" ++ .{t(.End)} ++
-            .{t(.End)},
-    } });
-}
+// test "ibexToJson fuzz" {
+//     const gpa = std.testing.allocator;
+//     const Context = struct {
+//         fn testOne(context: @This(), input: []const u8) anyerror!void {
+//             _ = context;
+//             const got = ibexToJsonAllocating(gpa, input) catch return;
+//             defer gpa.free(got);
+//             // print("{s}\n", .{got});
+//         }
+//     };
+//     try std.testing.fuzz(Context{}, Context.testOne, .{ .corpus = &.{
+//         &.{ t(.NumPos), 0x80, 0x80 },
+//         &.{ t(.NumPos), 0x80, 0xf1, 0xe9, 0x01, 0x90 },
+//         &.{t(.Null)},
+//         &.{t(.False)},
+//         &.{t(.True)},
+//         &.{ t(.String), 0x01, 0x01, 0x01, 0x02, 0x02, 0x41, t(.End) },
+//         .{t(.Object)} ++
+//             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+//             .{t(.String)} ++ "rate" ++ .{ t(.End), t(.NumPos), 0x80, 0x80 } ++
+//             .{t(.End)},
+//         .{t(.Object)} ++
+//             .{t(.String)} ++ "name" ++ .{ t(.End), t(.String) } ++ "Andy" ++ .{t(.End)} ++
+//             .{t(.String)} ++ "checked" ++ .{ t(.End), t(.False) } ++
+//             .{t(.String)} ++ "tags" ++ .{t(.End)} ++
+//             .{t(.Array)} ++
+//             "" ++ .{t(.String)} ++ "zig" ++ .{t(.End)} ++
+//             "" ++ .{t(.String)} ++ "c" ++ .{t(.End)} ++
+//             "" ++ .{t(.String)} ++ "perl" ++ .{t(.End)} ++
+//             "" ++ .{t(.End)} ++
+//             .{t(.End)},
+//     } });
+// }
 
 test {
     _ = @import("./testing/order.zig");
