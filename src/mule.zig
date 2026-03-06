@@ -17,34 +17,39 @@ const Teddy = struct {
     const ChunkBytes = 16;
     const Chunk = @Vector(ChunkBytes, u8);
 
-    groups: [8]?[]const u8 = undefined,
+    lo_map: Chunk = undefined,
+    hi_map: Chunk = undefined,
 
-    fn makeSets(self: Self) [256]u8 {
-        var set_map: [256]u8 = @splat(0);
-        for (self.groups, 0..) |group, i| {
-            if (group) |g| {
-                const mask = @as(u8, 1) << @intCast(i);
-                for (g) |char| {
-                    set_map[char] |= mask;
-                }
+    pub fn init(groups: []const []const u8) !Self {
+        if (groups.len > 8)
+            return error.TooManyGroups;
+
+        // Map each byte to the bitset of groups it belongs to
+        var group_map: [256]u8 = @splat(0);
+        for (groups, 0..) |group, i| {
+            const mask = @as(u8, 1) << @intCast(i);
+            for (group) |char| {
+                group_map[char] |= mask;
             }
         }
-        return set_map;
-    }
 
-    fn makeNybbleSets(self: Self) struct { Chunk, Chunk } {
+        // Split group_map into lo and hi nybble parts
         var lo_map: [16]u8 = @splat(0);
         var hi_map: [16]u8 = @splat(0);
-        for (self.makeSets(), 0..) |mask, i| {
+        for (group_map, 0..) |mask, i| {
             const index: u8 = @intCast(i);
             lo_map[index & 0x0f] |= mask;
             hi_map[index >> 4] |= mask;
         }
-        return .{ lo_map, hi_map };
+
+        return Self{
+            .lo_map = lo_map,
+            .hi_map = hi_map,
+        };
     }
 
-    // end from https://gist.github.com/sharpobject/80dc1b6f3aaeeada8c0e3a04ebc4b60a
-    fn lookupX86(mask: Chunk, index: Chunk) Chunk {
+    // https://ziggit.dev/t/simd-is-there-an-equivalent-to-mm-shuffle-ep/2251/6
+    fn lookupX86_64(mask: Chunk, index: Chunk) Chunk {
         return asm (
             \\vpshufb %[index], %[mask], %[out]
             : [out] "=x" (-> Chunk),
@@ -52,9 +57,8 @@ const Teddy = struct {
               [mask] "x" (mask),
         );
     }
-    // https://ziggit.dev/t/simd-is-there-an-equivalent-to-mm-shuffle-ep/2251/6
-    // https://developer.arm.com/architectures/instruction-sets/intrinsics/vqtbl1q_s8
-    fn lookupAarch64(mask: Chunk, index: Chunk) Chunk {
+
+    fn lookupAArch64(mask: Chunk, index: Chunk) Chunk {
         return asm (
             \\tbl %[out].16b, {%[mask].16b}, %[index].16b
             : [out] "=&x" (-> Chunk),
@@ -65,8 +69,8 @@ const Teddy = struct {
 
     fn lookup(mask: Chunk, index: Chunk) Chunk {
         return switch (builtin.cpu.arch) {
-            .aarch64, .aarch64_be => lookupAarch64(mask, index),
-            .x86_64 => lookupX86(mask, index),
+            .aarch64, .aarch64_be => lookupAArch64(mask, index),
+            .x86_64 => lookupX86_64(mask, index),
             else => @compileError("Unsupported Arch"),
         };
     }
@@ -74,16 +78,13 @@ const Teddy = struct {
     pub fn search(self: Self, gpa: Allocator, haystack: []const u8) !void {
         const buf = try zeroPad(gpa, haystack, @sizeOf(Chunk));
         defer gpa.free(buf);
-        const lo_map, const hi_map = self.makeNybbleSets();
         var pos: usize = 0;
         const lo_mask: Chunk = @splat(0x0f);
         const hi_shift: Chunk = @splat(4);
         while (pos != buf.len) {
             const chars: Chunk = buf[pos..][0..ChunkBytes].*;
-            const lo_chars: Chunk = chars & lo_mask;
-            const hi_chars: Chunk = chars >> hi_shift;
-            const lo_sets = lookup(lo_map, lo_chars);
-            const hi_sets = lookup(hi_map, hi_chars);
+            const lo_sets = lookup(self.lo_map, chars & lo_mask);
+            const hi_sets = lookup(self.hi_map, chars >> hi_shift);
             const sets: Chunk = lo_sets & hi_sets;
             print("sets: {any}\n", .{sets});
             pos += ChunkBytes;
@@ -93,22 +94,32 @@ const Teddy = struct {
 
 test Teddy {
     const gpa = std.testing.allocator;
-    const teddy = Teddy{ .groups = .{
+    const teddy: Teddy = try .init(&[_][]const u8{
         "0123456789",
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "abc",
         "defghijklmnopqrstuvwxyz",
         "Hel",
-        null,
-        null,
-        null,
-    } };
+        ",.",
+        " ",
+    });
 
-    try teddy.search(gpa, "Hello, World");
+    try teddy.search(gpa, "Hello, World, 123.456");
 }
 
 pub fn main() !void {
-    print("Hello!\n", .{});
+    const gpa = std.heap.page_allocator;
+    const teddy: Teddy = try .init(&[_][]const u8{
+        "0123456789",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "abc",
+        "defghijklmnopqrstuvwxyz",
+        "Hel",
+        ",.",
+        " ",
+    });
+
+    try teddy.search(gpa, "Hello, World, 123.456");
 }
 
 test {
