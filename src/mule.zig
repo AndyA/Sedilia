@@ -44,29 +44,29 @@ const Teddy = struct {
     }
 
     // end from https://gist.github.com/sharpobject/80dc1b6f3aaeeada8c0e3a04ebc4b60a
-    fn lookupX86(x: Chunk, mask: Chunk) Chunk {
+    fn lookupX86(mask: Chunk, index: Chunk) Chunk {
         return asm (
-            \\vpshufb %[mask], %[x], %[out]
+            \\vpshufb %[mask], %[index], %[out]
             : [out] "=x" (-> Chunk),
-            : [x] "x" (x),
+            : [index] "x" (index),
               [mask] "x" (mask),
         );
     }
     // https://ziggit.dev/t/simd-is-there-an-equivalent-to-mm-shuffle-ep/2251/6
     // https://developer.arm.com/architectures/instruction-sets/intrinsics/vqtbl1q_s8
-    fn lookupAarch64(x: Chunk, mask: Chunk) Chunk {
+    fn lookupAarch64(mask: Chunk, index: Chunk) Chunk {
         return asm (
-            \\tbl  %[out].16b, {%[mask].16b}, %[x].16b
+            \\tbl  %[out].16b, {%[mask].16b}, %[index].16b
             : [out] "=&x" (-> Chunk),
-            : [x] "x" (x),
+            : [index] "x" (index),
               [mask] "x" (mask),
         );
     }
 
-    fn lookup(x: Chunk, mask: Chunk) Chunk {
+    fn lookup(mask: Chunk, index: Chunk) Chunk {
         return switch (builtin.cpu.arch) {
-            .aarch64, .aarch64_be => lookupAarch64(x, mask),
-            .x86_64 => lookupX86(x, mask),
+            .aarch64, .aarch64_be => lookupAarch64(mask, index),
+            .x86_64 => lookupX86(mask, index),
             else => @compileError("Unsupported Arch"),
         };
     }
@@ -82,8 +82,8 @@ const Teddy = struct {
             const chars: Chunk = buf[pos..][0..ChunkBytes].*;
             const lo_chars: Chunk = chars & lo_mask;
             const hi_chars: Chunk = chars >> hi_shift;
-            const lo_sets = lookup(lo_chars, lo_map);
-            const hi_sets = lookup(hi_chars, hi_map);
+            const lo_sets = lookup(lo_map, lo_chars);
+            const hi_sets = lookup(hi_map, hi_chars);
             const sets: Chunk = lo_sets & hi_sets;
             print("sets: {any}\n", .{sets});
             pos += ChunkBytes;
