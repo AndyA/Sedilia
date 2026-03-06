@@ -43,6 +43,15 @@ const Teddy = struct {
         return .{ lo_map, hi_map };
     }
 
+    // end from https://gist.github.com/sharpobject/80dc1b6f3aaeeada8c0e3a04ebc4b60a
+    fn lookupX86(x: Chunk, mask: Chunk) Chunk {
+        return asm (
+            \\vpshufb %[mask], %[x], %[out]
+            : [out] "=x" (-> Chunk),
+            : [x] "+x" (x),
+              [mask] "x" (mask),
+        );
+    }
     // https://ziggit.dev/t/simd-is-there-an-equivalent-to-mm-shuffle-ep/2251/6
     // https://developer.arm.com/architectures/instruction-sets/intrinsics/vqtbl1q_s8
     fn lookupAarch64(x: Chunk, mask: Chunk) Chunk {
@@ -57,7 +66,8 @@ const Teddy = struct {
     fn lookup(x: Chunk, mask: Chunk) Chunk {
         return switch (builtin.cpu.arch) {
             .aarch64, .aarch64_be => lookupAarch64(x, mask),
-            else => unreachable,
+            .x86_64 => lookupX86(x, mask),
+            else => @compileError("Unsupported Arch"),
         };
     }
 
