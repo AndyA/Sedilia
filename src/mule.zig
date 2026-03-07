@@ -82,9 +82,9 @@ const Teddy = struct {
         const lo_mask: Chunk = @splat(0x0f);
         const hi_shift: Chunk = @splat(4);
         while (pos != buf.len) {
-            const chars: Chunk = buf[pos..][0..ChunkBytes].*;
-            const lo_sets = lookup(self.lo_map, chars & lo_mask);
-            const hi_sets = lookup(self.hi_map, chars >> hi_shift);
+            const chunk: Chunk = buf[pos..][0..ChunkBytes].*;
+            const lo_sets = lookup(self.lo_map, chunk & lo_mask);
+            const hi_sets = lookup(self.hi_map, chunk >> hi_shift);
             const sets = lo_sets & hi_sets;
             print("sets: {any}\n", .{sets});
             pos += ChunkBytes;
